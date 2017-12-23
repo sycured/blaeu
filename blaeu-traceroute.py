@@ -112,7 +112,6 @@ def usage(msg=None):
 
     """
 
-print("TODO DO NOT USE")
 try:
     optlist, args = getopt.getopt (sys.argv[1:], "fr:c:a:m:d:x:n:o:t:p:vhdls:i:b:",
                                ["format", "requested=", "country=", "area=", "size=", "port=", "asn=", "percentage=", "probes=",
@@ -322,23 +321,23 @@ if format: # Code stolen from json2traceroute.py
                                     rtt.append(hr["rtt"])
                                 except KeyError:
                                     rtt.append("*")
-                                    hopfrom = hr["from"]
-                                    ASN = whoisrecord(hopfrom)
-                                    if hopfrom:
-                                        try:
-                                            if not do_reverse_lookup:
-                                                    print(hopfrom, "  ", ASN.asn, "  ", ASN.owner,"  ",
-                                                                  end=' ')
-                                            else:
-                                                    reverse_lookup = lookup_ip(hopfrom)
-                                                    print(hopfrom, "  ", reverse_lookup, "  ", ASN.asn, "  ",
-                                                                  ASN.owner, "  ", end=' ')
-                                        except Exception as e:
-                                            print("Lookup failed because of", e, "  ", end=' ')
-                                            print(rtt)
-                                    else:
-                                        print("Error: ", proberesult["error"])
-                                    print("")
+                                hopfrom = hr["from"]
+                                ASN = whoisrecord(hopfrom)
+                        if hopfrom:
+                                  try:
+                                      if not do_reverse_lookup:
+                                              print(hopfrom, "  ", ASN.asn, "  ", ASN.owner,"  ",
+                                                            end=' ')
+                                      else:
+                                              reverse_lookup = lookup_ip(hopfrom)
+                                              print(hopfrom, "  ", reverse_lookup, "  ", ASN.asn, "  ",
+                                                            ASN.owner, "  ", end=' ')
+                                  except Exception as e:
+                                      print("Lookup failed because of", e, "  ", end=' ')
+                        print(rtt)
+                    else:
+                        print("Error: ", proberesult["error"])
+            print("")      
     finally:
           pkl_file = open('whois.pkl', 'wb')
           pickle.dump(whois, pkl_file)
