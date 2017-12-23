@@ -3,3 +3,6 @@
 whois.pkl
 *.bak
 __pycache__
+dist
+*.egg-info
+*.json
