@@ -21,7 +21,7 @@ import getopt
 import socket
 import collections
 
-import RIPEAtlas
+import Blaeu
 
 # https://github.com/pyca/pyopenssl https://pyopenssl.readthedocs.org/en/stable/
 import OpenSSL.crypto
@@ -160,13 +160,13 @@ if measurement_id is None:
         if verbose:
             print(data)
 
-        measurement = RIPEAtlas.Measurement(data)
+        measurement = Blaeu.Measurement(data)
         if verbose:
                 print("Measurement #%s to %s uses %i probes" % (measurement.id, target,
                                                             measurement.num_probes))
         rdata = measurement.results(wait=True, percentage_required=percentage_required)
 else:
-    measurement = RIPEAtlas.Measurement(data=None, id=measurement_id)
+    measurement = Blaeu.Measurement(data=None, id=measurement_id)
     rdata = measurement.results(wait=False)
 
 sets = collections.defaultdict(Set)
