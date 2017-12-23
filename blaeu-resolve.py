@@ -140,7 +140,7 @@ try:
             probe_to_use = value
         elif option == "--nameserver" or option == "-e":
             nameserver = value
-            nameservers = string.split(nameserver, ",")
+            nameservers = nameserver.split(",")
         elif option == "--help" or option == "-h":
             usage()
             sys.exit(0)

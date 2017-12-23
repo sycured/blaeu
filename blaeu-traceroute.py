@@ -183,7 +183,7 @@ if not is_ip_address(target):
     sys.exit(1)
 
 if the_probes is not None:
-    requested = len(string.split(the_probes,","))
+    requested = len(the_probes.split(","))
 data = { "is_oneoff": True,
          "definitions": [
            { "target": target, "description": "Traceroute %s" % target,

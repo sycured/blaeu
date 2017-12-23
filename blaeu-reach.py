@@ -108,9 +108,9 @@ try:
         elif option == "--size" or option == "-z":
             size = int(value)
         elif option == "--exclude" or option == "-e":
-            exclude = string.split(value, ",")
+            exclude = value.split(",")
         elif option == "--include" or option == "-i":
-            include = string.split(value, ",")
+            include = value.split(",")
         elif option == "--old_measurement" or option == "-g":
             old_measurement = value
         elif option == "--measurement_ID" or option == "-m":
@@ -140,7 +140,7 @@ if len(targets) == 0:
     sys.exit(1)
     
 if the_probes is not None:
-    requested = len(string.split(the_probes,","))
+    requested = len(the_probes.split(","))
 if verbose and machine_readable:
     usage("Specify verbose *or* machine-readable output")
     sys.exit(1)
