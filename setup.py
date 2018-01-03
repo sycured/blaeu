@@ -14,8 +14,14 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-import pypandoc
-long_description = pypandoc.convert('README.md', 'rst')
+if not path.exists('README.rst'):
+    import pypandoc
+    rst = pypandoc.convert('README.md', 'rst')
+    f = open('README.rst','w+')
+    f.write(rst)
+    f.close()
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
     
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
@@ -133,7 +139,7 @@ setup(
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
     # TODO: seems ignored "error: can't copy 'LICENCE': doesn't exist or not a regular file"
 
-    data_files=[('.', ['LICENCE', 'README.md'])],  # Optional
+    data_files=[('.', ['LICENCE', 'README.md', 'README.rst'])],  # Optional
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
