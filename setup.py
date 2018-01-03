@@ -14,7 +14,7 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-if not path.exists('README.rst'): # TODO: and test it is newer thn README.md
+if not path.exists('README.rst'): # TODO: and test it is newer than README.md
     import pypandoc
     rst = pypandoc.convert('README.md', 'rst')
     f = open('README.rst','w+')
@@ -31,7 +31,7 @@ setup(
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
-    version='1.0.3',  # Required
+    version='1.0.4',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -137,22 +137,11 @@ setup(
     # http://docs.python.org/3.4/distutils/setupscript.html#installing-additional-files
     #
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
-    # TODO: seems ignored "error: can't copy 'LICENCE': doesn't exist or not a regular file"
-
-    data_files=[('.', ['LICENCE', 'README.md', 'README.rst'])],  # Optional
+    data_files=[],  # Optional
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # `pip` to create the appropriate form of executable for the target
     # platform.
-    # DOES NOT WORK ("error in blaeu setup command: ("EntryPoint must be in 'name=module:attrs [extras]' format", 'blaeu-reach=blaeu-reach:main')") so we use scripts instead:
-    #entry_points={  # Optional
-    #    'console_scripts': [
-    #        'blaeu-reach=blaeu-reach:main',
-    #        'blaeu-resolve=blaeu-resolve:main',
-    #        'blaeau-traceroute=blaeu-traceroute:main',
-    #        'blaeu-cert=blaeu-cert:main'
-    #    ],
-    #},
     scripts=['blaeu-reach', 'blaeu-resolve', 'blaeu-traceroute', 'blaeu-cert']
 )
