@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """See:
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
@@ -12,9 +14,9 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
+import pypandoc
+long_description = pypandoc.convert('README.md', 'rst')
+    
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 
@@ -23,7 +25,7 @@ setup(
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
-    version='1.0.1',  # Required
+    version='1.0.2',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -48,6 +50,8 @@ setup(
     # above.
     author_email='stephane+frama@bortzmeyer.org',  # Optional
 
+    license = 'BSD',
+    
     # Classifiers help users find your project by categorizing it.
     #
     # For a list of valid classifiers, see
@@ -107,8 +111,12 @@ setup(
     #
     # Similar to `install_requires` above, these must be valid existing
     # projects.
-    extras_require={  # Optional
+    extras_require={
+        'dev': ['pypandoc']
+        # Optional
     },
+
+    python_requires='>=3',
 
     # If there are data files included in your packages that need to be
     # installed, specify them here.
