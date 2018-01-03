@@ -14,7 +14,7 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
-if not path.exists('README.rst'):
+if not path.exists('README.rst'): # TODO: and test it is newer thn README.md
     import pypandoc
     rst = pypandoc.convert('README.md', 'rst')
     f = open('README.rst','w+')
