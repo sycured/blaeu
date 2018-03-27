@@ -31,7 +31,7 @@ setup(
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
-    version='1.0.5',  # Required
+    version='1.0.6',  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
@@ -139,9 +139,8 @@ setup(
     # In this case, 'data_file' will be installed into '<sys.prefix>/my_data'
     data_files=[],  # Optional
 
-    # To provide executable scripts, use entry points in preference to the
-    # "scripts" keyword. Entry points provide cross-platform support and allow
-    # `pip` to create the appropriate form of executable for the target
-    # platform.
-    scripts=['blaeu-reach', 'blaeu-resolve', 'blaeu-traceroute', 'blaeu-cert']
+    # To provide executable scripts, entry points are officially
+    # recommended but way too hard for me.
+    scripts=['blaeu-reach', 'blaeu-resolve', 'blaeu-traceroute', 'blaeu-cert'],
+
 )
