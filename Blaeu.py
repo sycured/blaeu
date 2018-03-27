@@ -17,6 +17,8 @@ import json
 import time
 import urllib.request, urllib.error, urllib.parse
 import random
+import sys
+import getopt
 
 authfile = "%s/.atlas/auth" % os.environ['HOME']
 base_url = "https://atlas.ripe.net/api/v2/measurements"
@@ -68,6 +70,91 @@ class InternalError(Exception):
 # Resut JSON file does not have the expected fields/members
 class WrongAssumption(Exception):
     pass
+
+class Config:
+    def __init__(self):
+        self.country = None # World-wide
+        self.asn = None # All
+        self.area = None # World-wide
+        self.verbose = False
+        self.requested = 5 # Probes
+        self.percentage_required = 0.9
+        self.measurement_id = None
+        self.display_probes = False
+        self.ipv6 = False
+
+    def usage(self, msg=None):
+        if msg:
+            print(msg, file=sys.stderr)
+        print("""General options are:
+        --verbose or -v : makes the program more talkative
+        --help or -h : this message
+        --displayprobes or -o : display the probes numbers (WARNING: big lists)
+        --country=2LETTERSCODE or -c 2LETTERSCODE : limits the measurements to one country (default is world-wide)
+        --area=AREACODE or -a AREACODE : limits the measurements to one area such as North-Central (default is world-wide)
+        --asn=ASnumber or -n ASnumber : limits the measurements to one AS (default is all ASes)
+        --requested=N or -r N : requests N probes (default is %s)
+        --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %2.2f)
+        --measurement-ID=N or -m N : do not start a measurement, just analyze a former one
+        """ % (self.requested, self.percentage_required), file=sys.stderr)
+
+    def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
+        if usage is None:
+            usage = self.usage
+        try:
+            optlist, args = getopt.getopt (sys.argv[1:],
+                                           "r:c:a:n:p:om:vhisket:6" + shortOptsSpecific,
+                                           ["requested=",    "country=", "area=", "asn=", "port=",
+                                                               "percentage=", "nosni",
+                                                               "measurement-ID", "displayprobes",
+                                                               "ipv6", "verbose", "help", "issuer",
+                                                               "serial", "expiration", "key"] +
+                                           longOptsSpecific)
+            for option, value in optlist:
+                if option == "--country" or option == "-c":
+                    self.country = value
+                elif option == "--area" or option == "-a":
+                    self.area = value
+                elif option == "--asn" or option == "-n":
+                    self.asn = value
+                elif option == "--percentage" or option == "-p":
+                    self.percentage_required = float(value)
+                elif option == "--requested" or option == "-r":
+                    self.requested = int(value)
+                elif option == "--port" or option == "-t":
+                    self.port = int(value)
+                elif option == "--measurement-ID" or option == "-m":
+                    self.measurement_id = value
+                elif option == "--verbose" or option == "-v":
+                    self.verbose = True
+                elif option == "--ipv6" or option == "-6":
+                    self.ipv6 = True
+                elif option == "--displayprobes" or option == "-o":
+                    self.display_probes = True
+                elif option == "--help" or option == "-h":
+                    usage()
+                    sys.exit(0)
+                else:  #TODO parse the specific
+                    # Should never occur, it is trapped by getopt
+                    usage("Unknown option %s" % option)
+                    sys.exit(1)
+        except getopt.error as reason:
+            usage(reason)
+            sys.exit(1)
+        if self.country is not None:
+            if self.asn is not None or self.area is not None:
+                usage("Specify country *or* area *or* ASn")
+                sys.exit(1)
+        elif self.area is not None:
+            if self.asn is not None or self.country is not None:
+                usage("Specify country *or* area *or* ASn")
+                sys.exit(1)
+        elif self.asn is not None:
+            if self.area is not None or self.country is not None:
+                usage("Specify country *or* area *or* ASn")
+                sys.exit(1)
+        return args
+    
 
 class JsonRequest(urllib.request.Request):
     def __init__(self, url):
