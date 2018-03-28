@@ -87,6 +87,7 @@ class Config:
         self.measurement_id = None
         self.display_probes = False
         self.ipv6 = False
+        self.port = 80
         # Tags
         self.exclude = None
         self.include = None
@@ -102,13 +103,15 @@ class Config:
         --area=AREACODE or -a AREACODE : limits the measurements to one area such as North-Central (default is world-wide)
         --asn=ASnumber or -n ASnumber : limits the measurements to one AS (default is all ASes)
         --prefix=IPprefix or -f IPprefix : limits the measurements to one IP prefix (default is all prefixes) WARNING: it must be an *exact* prefix in the global routing table
+        --probes=N or -s N : selects the probes by giving explicit ID (one ID or a comma-separated list)
         --requested=N or -r N : requests N probes (default is %s)
         --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %2.2f)
         --measurement-ID=N or -m N : do not start a measurement, just analyze a former one
         --old_measurement MSMID or -g MSMID : uses the probes of measurement MSMID
         --include TAGS or -i TAGS : limits the measurements to probes with these tags (a comma-separated list)
         --exclude TAGS or -e TAGS : excludes from measurements the probes with these tags (a comma-separated list)
-        """ % (self.requested, self.percentage_required), file=sys.stderr)
+        --port=N or -b N : destination port for TCP (default is %s)
+        """ % (self.requested, self.percentage_required, self.port), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
         if usage is None:
@@ -131,6 +134,8 @@ class Config:
                     self.asn = value
                 elif option == "--prefix" or option == "-f":
                     self.prefix = value
+                elif option == "--probes" or option == "-s":
+                    config.probes = value # Splitting (and syntax checking...) delegated to Atlas
                 elif option == "--percentage" or option == "-p":
                     self.percentage_required = float(value)
                 elif option == "--requested" or option == "-r":
@@ -181,7 +186,8 @@ class Config:
                self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
-
+        if self.probes is not None:
+            self.requested = len(self.probes.split(","))
         return args
     
 

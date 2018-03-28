@@ -54,7 +54,7 @@ class Set():
 
 def usage(msg=None):
     config.usage(msg)
-    print("""Also are:
+    print("""Also:
     --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
     --displayresolvers or -l : display the resolvers IP addresses (WARNING: big lists)
     --norecursive or -z : asks the resolver to NOT recurse (default is to recurse, note --norecursive works ONLY if asking a specific resolver, not with the default one)

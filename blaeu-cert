@@ -29,8 +29,9 @@ import OpenSSL.crypto
 config = Blaeu.Config()
 # Default values
 config.display = "n" #Name
-config.port = 443
 config.sni = True
+# Override what's in the Blaeu package
+config.port = 443
 
 class Set():
     def __init__(self):
@@ -43,7 +44,6 @@ def usage(msg=None):
     --key or -k : displays the public key (default is to display the name)
     --serial or -s : displays the serial number (default is to display the name)
     --expiration or -e : displays the expiration datetime (default is to display the name)
-    --port or -t : sets the destination port (default is of course 443)
     --nosni : do not send the SNI (Server Name Indication) (default is to send it)""", file=sys.stderr)
 
 def specificParse(config, option, value):

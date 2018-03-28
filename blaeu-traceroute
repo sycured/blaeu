@@ -16,7 +16,6 @@ import os
 import string
 import sys
 import time
-import getopt
 import socket
 import pickle as pickle
 
@@ -25,24 +24,15 @@ import Blaeu
 # If we use --format:
 # import cymruwhois
 
+config = Blaeu.Config()
 # Default values
-country = None # World-wide
-asn = None # All
-area = None # World-wide
-old_measurement = None
-measurement_id = None
-verbose = False
-requested = 5 # Probes
-protocol = "UDP"
-percentage_required = 0.9
-the_probes = None
-format = False
-do_lookup = False
-do_reverse_lookup = False
-size = None
-port = None
-first_hop = None
-max_hops = None
+config.protocol = "UDP"
+config.format = False
+config.do_lookup = False
+config.do_reverse_lookup = False
+config.size = None
+config.first_hop = 1
+config.max_hops = 32
 
 def is_ip_address(str):
     try:
@@ -83,29 +73,17 @@ def lookup_ip(ip):
     return name
 
 def usage(msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
     print("Usage: %s target-IP-address" % sys.argv[0], file=sys.stderr)
-    print("""Options are:
-    --verbose or -v : makes the program more talkative
-    --help or -h : this message
-    --format or -f : downloads the results and format them in a traditional traceroute way
-    --country=2LETTERSCODE or -c 2LETTERSCODE : limits the measurements to one country (default is world-wide)
-    --area=AREACODE or -a AREACODE : limits the measurements to one area such as North-Central (default is world-wide)
-    --asn=ASnumber or -n ASnumber : limits the measurements to one AS (default is all ASes)
-    --probes=N or -s N : selects the probes by giving explicit ID (one ID or a comma-separated list)
-    --old_measurement MSMID or -o MSMID : uses the probes of measurement #MSMID
-    --measurement_ID=N or -m N : do not start a measurement, just analyze a former one 
-    --requested=N or -r N : requests N probes (default is %s)
-    --protocol=PROTO or -t PROTO : uses this protocol (UDP, TCP or ICMP, default is UDP)
-    --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %2.2f)
+    config.usage(msg)
+    print("""Also:
+    --format or -b : downloads the results and format them in a traditional traceroute way
+    --protocol=PROTO or -j PROTO : uses this protocol (UDP, TCP or ICMP, default is %s)
     --do_lookup : Enables IP lookup feature (default is disabled, may become interactive if the machine has several addresses)
     --do_reverse_lookup or -l : Enables reverse IP lookup feature for hops
     --size=N or -i N : number of bytes in the packet (default unknown)
-    --port=N or -b N : destination port for TCP (default is 80)
-    --first_hop=N or -d N : TTL/max hop count for the first hop  (default 1)
-    --max_hops=N or -x N : TTL/max hop count for the last hop  (default 32)
-    """ % (requested, percentage_required), file=sys.stderr)
+    --first_hop=N or -d N : TTL/max hop count for the first hop  (default %d)
+    --max_hops=N or -x N : TTL/max hop count for the last hop  (default %d)
+    """ % (config.protocol, config.first_hop, config.max_hops), file=sys.stderr)
 
     """For "TCP Ping"
     <https://labs.ripe.net/Members/wilhelm/measuring-your-web-server-reachability-with-tcp-ping>,
@@ -113,66 +91,38 @@ def usage(msg=None):
 
     """
 
-try:
-    optlist, args = getopt.getopt (sys.argv[1:], "fr:c:a:m:d:x:n:o:t:p:vhdls:i:b:",
-                               ["format", "requested=", "country=", "area=", "size=", "port=", "asn=", "percentage=", "probes=",
-                                "protocol=", "old_measurement=",  "measurement_ID=", "first_hop=", "max_hops=",
-                               "verbose", "help", "do_lookup","do_reverse_lookup"])
-    for option, value in optlist:
-        if option == "--country" or option == "-c":
-            country = value
-        elif option == "--area" or option == "-a":
-            area = value
-        elif option == "--asn" or option == "-n":
-            asn = value
-        elif option == "--old_measurement" or option == "-o":
-            old_measurement = value
-        elif option == "--measurement_ID" or option == "-m":
-            measurement_id = value
-        elif option == "--protocol" or option == "-t":
-            if value.upper() != "UDP" and value.upper() != "ICMP" and value.upper() != "TCP":
-                usage("Protocol must be UDP or ICMP or TCP")
-                sys.exit(1)
-            protocol = value.upper()
-        elif option == "--probes" or option == "-s":
-            the_probes = value # Splitting (and syntax checking...) delegated to Atlas
-        elif option == "--percentage" or option == "-p":
-            percentage_required = float(value)
-        elif option == "--requested" or option == "-r":
-            requested = int(value)
-        elif option == "--size" or option == "-i":
-            size = int(value)
-        elif option == "--first_hop" or option == "-d":
-            first_hop = int(value)
-        elif option == "--max_hops" or option == "-x":
-            max_hops = int(value)
-        elif option == "--port" or option == "-b":
-            port = value
-        elif option == "--verbose" or option == "-v":
-            verbose = True
-        elif option == "--format" or option == "-f":
-            format = True
-        elif option == "--help" or option == "-h":
-            usage()
-            sys.exit(0)
-        elif option == "--do_lookup" or option == "-d":
-            do_lookup = True
-        elif option == "--do_reverse_lookup" or option == "-l":
-            do_reverse_lookup = True
-        else:
-            # Should never occur, it is trapped by getopt
-            usage("Unknown option %s" % option)
+def specificParse(config, option, value):
+    result = True
+    if option == "--protocol" or option == "-j":
+        if value.upper() != "UDP" and value.upper() != "ICMP" and value.upper() != "TCP":
+            usage("Protocol must be UDP or ICMP or TCP")
             sys.exit(1)
-except getopt.error as reason:
-    usage(reason)
-    sys.exit(1)
+            config.protocol = value.upper()
+    elif option == "--size" or option == "-z":
+        config.size = int(value)
+    elif option == "--first_hop" or option == "-y":
+        config.first_hop = int(value)
+    elif option == "--max_hops" or option == "-x":
+        config.max_hops = int(value)
+    elif option == "--format" or option == "-b":
+        config.format = True
+    elif option == "--do_lookup" or option == "-d":
+        config.do_lookup = True
+    elif option == "--do_reverse_lookup" or option == "-l":
+        config.do_reverse_lookup = True
+    else:
+        result = False
+    return result
+  
+args = config.parse("zjxbdy", ["format", "size=", "protocol=", "first_hop=", "max_hops=",
+                               "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
     usage()
     sys.exit(1)
 target = args[0]
 
-if do_lookup:
+if config.do_lookup:
     hostname = target
     target = lookup_hostname(hostname)
     if not target:
@@ -183,61 +133,44 @@ if not is_ip_address(target):
     print(("Target must be an IP address, NOT AN HOST NAME"), file=sys.stderr)
     sys.exit(1)
 
-if the_probes is not None:
-    requested = len(the_probes.split(","))
 data = { "is_oneoff": True,
          "definitions": [
            { "target": target, "description": "Traceroute %s" % target,
-            "type": "traceroute", "protocol": protocol} ],
+            "type": "traceroute", "protocol": config.protocol} ],
             "probes": [
-             { "requested": requested} ] }
-if size is not None:
-    data["definitions"][0]['size'] = size    
-if port is not None:
-    data["definitions"][0]['port'] = port    
-if first_hop is not None:
-    data["definitions"][0]['first_hop'] = first_hop
-if max_hops is not None:
-    data["definitions"][0]['max_hops'] = max_hops    
-if the_probes is not None:
-    if country is not None or area is not None or asn is not None:
-        usage("Specify the probes ID *or* country *or* area *or* ASn")
-        sys.exit(1)
+             { "requested": config.requested} ] }
+if config.size is not None:
+    data["definitions"][0]['size'] = config.size    
+if config.port is not None:
+    data["definitions"][0]['port'] = config.port    
+if config.first_hop is not None:
+    data["definitions"][0]['first_hop'] = config.first_hop
+if config.max_hops is not None:
+    data["definitions"][0]['max_hops'] = config.max_hops    
+if config.probes is not None:
     data["probes"][0]["type"] = "probes"
-    data["probes"][0]["value"] = the_probes
+    data["probes"][0]["value"] = config.probes
 else:
-    if country is not None:
-        if asn is not None or area is not None or old_measurement is not None:
-            usage("Specify country *or* area *or* ASn *or* old measurement")
-            sys.exit(1)
+    if config.country is not None:
         data["probes"][0]["type"] = "country"
-        data["probes"][0]["value"] = country
+        data["probes"][0]["value"] = config.country
         data["definitions"][0]["description"] += (" from %s" % country)
-    elif area is not None:
-            if asn is not None or country is not None or old_measurement is not None:
-                usage("Specify country *or* area *or* ASn *or* old measurement")
-                sys.exit(1)
-            data["probes"][0]["type"] = "area"
-            data["probes"][0]["value"] = area
-            data["definitions"][0]["description"] += (" from %s" % area)
-    elif asn is not None:
-            if area is not None or country is not None or old_measurement is not None:
-                usage("Specify country *or* area *or* ASn *or* old measurement")
-                sys.exit(1)
-            data["probes"][0]["type"] = "asn"
-            data["probes"][0]["value"] = asn
-            data["definitions"][0]["description"] += (" from AS #%s" % asn)
-    elif old_measurement is not None:
-            if area is not None or country is not None or asn is not None:
-                usage("Specify country *or* area *or* ASn *or* old measurement")
-                sys.exit(1)
-            data["probes"][0]["requested"] = 1000 # Dummy value, anyway,
-                                                    # but necessary to get
-                                                    # all the probes
-            # TODO: the huge value of "requested" makes us wait a very long time
-            data["probes"][0]["type"] = "msm"
-            data["probes"][0]["value"] = old_measurement
-            data["definitions"][0]["description"] += (" from probes of measurement #%s" % old_measurement)
+    elif config.area is not None:
+        data["probes"][0]["type"] = "area"
+        data["probes"][0]["value"] = config.area
+        data["definitions"][0]["description"] += (" from %s" % area)
+    elif config.asn is not None:
+        data["probes"][0]["type"] = "asn"
+        data["probes"][0]["value"] = config.asn
+        data["definitions"][0]["description"] += (" from AS #%s" % asn)
+    elif config.old_measurement is not None:
+        data["probes"][0]["requested"] = 1000 # Dummy value, anyway,
+        # but necessary to get
+        # all the probes
+        # TODO: the huge value of "requested" makes us wait a very long time
+        data["probes"][0]["type"] = "msm"
+        data["probes"][0]["value"] = config.old_measurement
+        data["definitions"][0]["description"] += (" from probes of measurement #%s" % config.old_measurement)
     else:
         data["probes"][0]["type"] = "area"
         data["probes"][0]["value"] = "WW"
@@ -247,8 +180,8 @@ if target.find(':') > -1:
 else:
     af = 4
 data["definitions"][0]['af'] = af
-if measurement_id is None:
-    if verbose:
+if config.measurement_id is None:
+    if config.verbose:
         print(data)
 
     measurement = Blaeu.Measurement(data)
@@ -256,16 +189,16 @@ if measurement_id is None:
                                                  data["definitions"][0]["description"],
                                                  measurement.num_probes))
 
-    rdata = measurement.results(wait=True, percentage_required=percentage_required)
+    rdata = measurement.results(wait=True, percentage_required=config.percentage_required)
     print(("%s probes reported" % len(rdata)))
 else:
-    measurement = Blaeu.Measurement(data=None, id=measurement_id)
+    measurement = Blaeu.Measurement(data=None, id=config.measurement_id)
     rdata = measurement.results(wait=False)
-    if verbose:
+    if config.verbose:
             print("%i results from already-done measurement #%s" % (len(rdata), measurement.id))
             
 print(("Test #%s done at %s" % (measurement.id, time.strftime("%Y-%m-%dT%H:%M:%SZ", measurement.time))))
-if format: # Code stolen from json2traceroute.py
+if config.format: # Code stolen from json2traceroute.py
     from cymruwhois import Client
 
     def whoisrecord(ip):
@@ -326,7 +259,7 @@ if format: # Code stolen from json2traceroute.py
                                 ASN = whoisrecord(hopfrom)
                         if hopfrom:
                                   try:
-                                      if not do_reverse_lookup:
+                                      if not config.do_reverse_lookup:
                                               print(hopfrom, "  ", ASN.asn, "  ", ASN.owner,"  ",
                                                             end=' ')
                                       else:
