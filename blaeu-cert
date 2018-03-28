@@ -38,6 +38,7 @@ class Set():
         self.total = 0
 
 def usage(msg=None):
+    print("Usage: %s target-name-or-IP" % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
     --issuer or -i : displays the issuer (default is to display the name)

@@ -47,6 +47,7 @@ def is_ip_address(str):
     return True
 
 def usage(msg=None):
+    print("Usage: %s target-IP-address ..." % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
     --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
