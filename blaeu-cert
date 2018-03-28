@@ -47,6 +47,7 @@ def usage(msg=None):
     --nosni : do not send the SNI (Server Name Indication) (default is to send it)""", file=sys.stderr)
 
 def specificParse(config, option, value):
+    result = True
     if option == "--issuer" or option == "-i":
         config.display = "i"
     elif option == "--key" or option == "-k":
@@ -59,6 +60,9 @@ def specificParse(config, option, value):
         config.sni = False
     elif option == "--port" or option == "-t":
         config.port = int(value)
+    else:
+        result = False
+    return result
 
 args = config.parse("iksep", ["issuer", "serial", "expiration", "key", "no-sni"], specificParse, usage)
 

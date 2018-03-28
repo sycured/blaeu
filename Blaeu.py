@@ -76,7 +76,7 @@ class Config:
         # Default values
         self.old_measurement = None
         self.measurement_id = None
-        self.the_probes = None
+        self.probes = None
         self.country = None # World-wide
         self.asn = None # All
         self.area = None # World-wide
@@ -101,6 +101,7 @@ class Config:
         --country=2LETTERSCODE or -c 2LETTERSCODE : limits the measurements to one country (default is world-wide)
         --area=AREACODE or -a AREACODE : limits the measurements to one area such as North-Central (default is world-wide)
         --asn=ASnumber or -n ASnumber : limits the measurements to one AS (default is all ASes)
+        --prefix=IPprefix or -f IPprefix : limits the measurements to one IP prefix (default is all prefixes) WARNING: it must be an *exact* prefix in the global routing table
         --requested=N or -r N : requests N probes (default is %s)
         --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %2.2f)
         --measurement-ID=N or -m N : do not start a measurement, just analyze a former one
@@ -114,8 +115,8 @@ class Config:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "g:r:c:a:n:p:om:vhisket:6" + shortOptsSpecific,
-                                           ["requested=",    "country=", "area=", "asn=", "port=",
+                                           "g:r:c:a:f:n:p:om:vhisket:6" + shortOptsSpecific,
+                                           ["requested=",    "country=", "area=", "asn=", "prefix=", "port=",
                                                                "percentage=", "nosni",
                                                                "measurement-ID", "old_measurement=", "displayprobes",
                                                                "ipv6", "verbose", "help", "issuer",
@@ -128,6 +129,8 @@ class Config:
                     self.area = value
                 elif option == "--asn" or option == "-n":
                     self.asn = value
+                elif option == "--prefix" or option == "-f":
+                    self.prefix = value
                 elif option == "--percentage" or option == "-p":
                     self.percentage_required = float(value)
                 elif option == "--requested" or option == "-r":
@@ -155,27 +158,27 @@ class Config:
             sys.exit(1)
         if self.country is not None:
             if self.asn is not None or self.area is not None or self.prefix is not None or \
-               self.the_probes is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.area is not None:
             if self.asn is not None or self.country is not None or self.prefix is not None or \
-               self.the_probes is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.asn is not None:
             if self.area is not None or self.country is not None or self.prefix is not None or \
-               self.the_probes is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
-        elif self.the_probes is not None:
+        elif self.probes is not None:
             if self.country is not None or self.area is not None or self.asn or \
                self.prefix is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.prefix is not None:
             if self.country is not None or self.area is not None or self.asn or \
-               self.the_probes is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
 
