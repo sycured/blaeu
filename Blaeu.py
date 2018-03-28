@@ -73,15 +73,23 @@ class WrongAssumption(Exception):
 
 class Config:
     def __init__(self):
+        # Default values
+        self.old_measurement = None
+        self.measurement_id = None
+        self.the_probes = None
         self.country = None # World-wide
         self.asn = None # All
         self.area = None # World-wide
+        self.prefix = None
         self.verbose = False
         self.requested = 5 # Probes
         self.percentage_required = 0.9
         self.measurement_id = None
         self.display_probes = False
         self.ipv6 = False
+        # Tags
+        self.exclude = None
+        self.include = None
 
     def usage(self, msg=None):
         if msg:
@@ -96,6 +104,9 @@ class Config:
         --requested=N or -r N : requests N probes (default is %s)
         --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %2.2f)
         --measurement-ID=N or -m N : do not start a measurement, just analyze a former one
+        --old_measurement MSMID or -g MSMID : uses the probes of measurement MSMID
+        --include TAGS or -i TAGS : limits the measurements to probes with these tags (a comma-separated list)
+        --exclude TAGS or -e TAGS : excludes from measurements the probes with these tags (a comma-separated list)
         """ % (self.requested, self.percentage_required), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
@@ -103,10 +114,10 @@ class Config:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "r:c:a:n:p:om:vhisket:6" + shortOptsSpecific,
+                                           "g:r:c:a:n:p:om:vhisket:6" + shortOptsSpecific,
                                            ["requested=",    "country=", "area=", "asn=", "port=",
                                                                "percentage=", "nosni",
-                                                               "measurement-ID", "displayprobes",
+                                                               "measurement-ID", "old_measurement=", "displayprobes",
                                                                "ipv6", "verbose", "help", "issuer",
                                                                "serial", "expiration", "key"] +
                                            longOptsSpecific)
@@ -134,25 +145,40 @@ class Config:
                 elif option == "--help" or option == "-h":
                     usage()
                     sys.exit(0)
-                else:  #TODO parse the specific
-                    # Should never occur, it is trapped by getopt
-                    usage("Unknown option %s" % option)
-                    sys.exit(1)
+                else:
+                    parseResult = parseSpecific(self, option, value)
+                    if not parseResult:
+                        usage("Unknown option %s" % option)
+                        sys.exit(1)
         except getopt.error as reason:
             usage(reason)
             sys.exit(1)
         if self.country is not None:
-            if self.asn is not None or self.area is not None:
-                usage("Specify country *or* area *or* ASn")
+            if self.asn is not None or self.area is not None or self.prefix is not None or \
+               self.the_probes is not None:
+                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.area is not None:
-            if self.asn is not None or self.country is not None:
-                usage("Specify country *or* area *or* ASn")
+            if self.asn is not None or self.country is not None or self.prefix is not None or \
+               self.the_probes is not None:
+                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.asn is not None:
-            if self.area is not None or self.country is not None:
-                usage("Specify country *or* area *or* ASn")
+            if self.area is not None or self.country is not None or self.prefix is not None or \
+               self.the_probes is not None:
+                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
+        elif self.the_probes is not None:
+            if self.country is not None or self.area is not None or self.asn or \
+               self.prefix is not None:
+                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
+                sys.exit(1)
+        elif self.prefix is not None:
+            if self.country is not None or self.area is not None or self.asn or \
+               self.the_probes is not None:
+                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
+                sys.exit(1)
+
         return args
     
 

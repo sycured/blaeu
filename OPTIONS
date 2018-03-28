@@ -1,0 +1,19 @@
+Generic short options (used by all programs). Specific options must
+use another letter:
+
+-6 : IPv6
+-a : area of the probes
+-c : country of the probes
+-e : Atlas tags to exclude
+-f : IP prefix of the probes
+-g : use the probes of this measurement 
+-h : help
+-i : Atlas tags to include
+-m : the ID of the measurement you want to analyze (instead of starting a new one)
+-n : AS number of the probes
+-o : display the relevant probes in the results
+-p : percentage of responding probes required
+-r : number of probes you ask for
+-s : list of probes to use
+-t : port number (not used by all programs)
+-v : verbose
