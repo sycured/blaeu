@@ -60,7 +60,6 @@ def specificParse(config, option, value):
     result = True
     if option == "--tests" or option == "-d":
         config.tests = int(value)
-        print("DEBUG: %d tests" % config.tests)
     elif option == "--size" or option == "-z":
         config.size = int(value)
     elif option == "--by_probe":

@@ -68,7 +68,7 @@ def usage(msg=None):
     --sort or -S : sort the result sets
     --type or -q : query type (default is %s)
     --severalperprobe or -p : count all the resolvers of each probe (default is to count only the first to reply)
-    --nameserver=IPaddr[,...] or -e IPaddr : query this name server (default is to query the probe's resolver)
+    --nameserver=IPaddr[,...] or -x IPaddr : query this name server (default is to query the probe's resolver)
     --probe_id : prepend probe ID (and timestamp) to the domain name (default is to abstain)
     """ % (config.qtype), file=sys.stderr)
 
@@ -93,8 +93,8 @@ def specificParse(config, option, value):
         elif option == "--sort" or option == "-S":
             config.sort = True
         elif option == "--nameserver" or option == "-x":
-            nameserver = value
-            config.nameservers = nameserver.split(",")
+            config.nameserver = value
+            config.nameservers = config.nameserver.split(",")
         elif option == "--displayresolvers" or option == "-l":
             config.display_resolvers = True
         elif option == "--displayvalidation" or option == "-j":
@@ -128,7 +128,8 @@ if len(args) != 1:
 
 domainname = args[0]
 
-data["definitions"][0]["query_argument"] = domainname,
+data["definitions"][0]["type"] = "dns"
+data["definitions"][0]["query_argument"] = domainname
 data["definitions"][0]["description"] = ("DNS resolution of %s" % domainname) + data["definitions"][0]["description"]
 data["definitions"][0]["query_class"] = "IN"
 data["definitions"][0]["query_type"] = config.qtype
@@ -159,15 +160,16 @@ if (config.display_probes or config.display_resolvers or config.display_rtt) and
     sys.exit(1)
 
 if config.nameserver is None:
-    nameservers = [None,]
+    config.nameservers = [None,]
 
-for nameserver in nameservers:
+for nameserver in config.nameservers:
     data["probes"][0]["tags"] = {}
     if nameserver is None:
         data["definitions"][0]["use_probe_resolver"] = True
         # Exclude probes which do not have at least one working resolver
-        data["probes"][0]["tags"]["include"] = ["system-resolves-a-correctly",
-                                                "system-resolves-aaaa-correctly"] 
+        if config.include is None:
+            data["probes"][0]["tags"]["include"] = ["system-resolves-a-correctly",
+                                                    "system-resolves-aaaa-correctly"] 
     else:
         data["probes"][0]["tags"]["include"] = []
         data["definitions"][0]["use_probe_resolver"] = False
@@ -340,11 +342,11 @@ for nameserver in nameservers:
                     print("Probe %s failed (malformed DNS message)" % probe_id)
             if config.only_one_per_probe:
                     break
-        if not probe_resolves and first_error != "" and verbose:
+        if not probe_resolves and first_error != "" and config.verbose:
             print("Warning, probe %s has no working resolver (first error is \"%s\")" % (probe_id, first_error))
         if not resolver_responds:
             if all_timeout:
-                if verbose:
+                if config.verbose:
                     print("Warning, probe %s never got reply from any resolver" % (probe_id))
                 # TODO these results appear as duplicate(s)
                 set_str = "TIMEOUT(S)"
