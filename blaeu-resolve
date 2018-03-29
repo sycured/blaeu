@@ -17,7 +17,6 @@ Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 import json
 import sys
 import time
-import string
 import base64
 import collections
 
@@ -113,7 +112,7 @@ def specificParse(config, option, value):
             result = False
         return result
     
-args = config.parse("q:zdb:kSx:lj", ["type=", "ednssize=",
+args, data = config.parse("q:zdb:kSx:lj", ["type=", "ednssize=",
                                      "displayresolvers", "probe_id",
                                      "displayrtt", "displayvalidation",
                                      "dnssec", "nsid", "norecursive",
@@ -129,37 +128,10 @@ if len(args) != 1:
 
 domainname = args[0]
 
-if config.measurement_id is None:
-    data = { "is_oneoff": True,
-         "definitions": [{ "type": "dns", 
-                       "query_argument": domainname,
-                       "description": "DNS resolution of %s" % domainname,
-                       "query_class": "IN", "query_type": config.qtype}],
-     "probes": [{"requested": config.requested, "type": "area", "value": "WW"}] }
-if config.probes is not None:
-    # TODO: should warn if --requested was specified
-    data["probes"][0]["type"] = "probes"
-    data["probes"][0]["value"] = str(config.probes)
-else:
-    if config.country is not None:
-        data["probes"][0]["type"] = "country"
-        data["probes"][0]["value"] = config.country
-        data["definitions"][0]["description"] += (" from %s" % config.country)
-    elif config.area is not None:
-        data["probes"][0]["type"] = "area"
-        data["probes"][0]["value"] = config.area
-        data["definitions"][0]["description"] += (" from %s" % config.area)
-    elif config.asn is not None:
-        data["probes"][0]["type"] = "asn"
-        data["probes"][0]["value"] = config.asn
-        data["definitions"][0]["description"] += (" from AS #%s" % config.asn)
-    elif config.prefix is not None:
-        data["probes"][0]["type"] = "prefix"
-        data["probes"][0]["value"] = config.prefix
-        data["definitions"][0]["description"] += (" from prefix %s" % config.prefix)
-    else:
-        data["probes"][0]["type"] = "area"
-        data["probes"][0]["value"] = "WW"
+data["definitions"][0]["query_argument"] = domainname,
+data["definitions"][0]["description"] = ("DNS resolution of %s" % domainname) + data["definitions"][0]["description"]
+data["definitions"][0]["query_class"] = "IN"
+data["definitions"][0]["query_type"] = config.qtype
 if config.edns_size is not None and config.protocol == "UDP":
     data["definitions"][0]["udp_payload_size"] = config.edns_size
 if config.dnssec or config.display_validation: # https://atlas.ripe.net/docs/api/v2/reference/#!/measurements/Dns_Type_Measurement_List_POST

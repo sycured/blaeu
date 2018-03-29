@@ -19,6 +19,7 @@ import urllib.request, urllib.error, urllib.parse
 import random
 import sys
 import getopt
+import string
 
 authfile = "%s/.atlas/auth" % os.environ['HOME']
 base_url = "https://atlas.ripe.net/api/v2/measurements"
@@ -83,6 +84,7 @@ class Config:
         self.prefix = None
         self.verbose = False
         self.requested = 5 # Probes
+        self.default_requested = True
         self.percentage_required = 0.9
         self.measurement_id = None
         self.display_probes = False
@@ -110,7 +112,7 @@ class Config:
         --old_measurement MSMID or -g MSMID : uses the probes of measurement MSMID
         --include TAGS or -i TAGS : limits the measurements to probes with these tags (a comma-separated list)
         --exclude TAGS or -e TAGS : excludes from measurements the probes with these tags (a comma-separated list)
-        --port=N or -b N : destination port for TCP (default is %s)
+        --port=N or -t N : destination port for TCP (default is %s)
         """ % (self.requested, self.percentage_required, self.port), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
@@ -118,12 +120,11 @@ class Config:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "g:r:c:a:f:n:p:om:vhisket:6" + shortOptsSpecific,
-                                           ["requested=",    "country=", "area=", "asn=", "prefix=", "port=",
-                                                               "percentage=", "nosni",
-                                                               "measurement-ID", "old_measurement=", "displayprobes",
-                                                               "ipv6", "verbose", "help", "issuer",
-                                                               "serial", "expiration", "key"] +
+                                           "6a:c:e:f:g:hi:m:n:op:r:s:t:v" + shortOptsSpecific,
+                                           ["requested=", "country=", "area=", "asn=", "prefix=",
+                                            "port=", "percentage=", "include", "exclude",
+                                            "measurement-ID", "old_measurement=", "displayprobes",
+                                            "ipv6", "verbose", "help"] +
                                            longOptsSpecific)
             for option, value in optlist:
                 if option == "--country" or option == "-c":
@@ -135,11 +136,12 @@ class Config:
                 elif option == "--prefix" or option == "-f":
                     self.prefix = value
                 elif option == "--probes" or option == "-s":
-                    config.probes = value # Splitting (and syntax checking...) delegated to Atlas
+                    self.probes = value # Splitting (and syntax checking...) delegated to Atlas
                 elif option == "--percentage" or option == "-p":
                     self.percentage_required = float(value)
                 elif option == "--requested" or option == "-r":
                     self.requested = int(value)
+                    self.default_requested = False
                 elif option == "--port" or option == "-t":
                     self.port = int(value)
                 elif option == "--measurement-ID" or option == "-m":
@@ -150,6 +152,10 @@ class Config:
                     self.ipv6 = True
                 elif option == "--displayprobes" or option == "-o":
                     self.display_probes = True
+                elif option == "--exclude" or option == "-e":
+                    self.exclude = value.split(",")
+                elif option == "--include" or option == "-i":
+                    self.include = value.split(",")
                 elif option == "--help" or option == "-h":
                     usage()
                     sys.exit(0)
@@ -187,8 +193,53 @@ class Config:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         if self.probes is not None:
+            if not self.default_requested:
+                print("Warning: --requested=%d ignored since a list of probes was requested" % self.requested)
             self.requested = len(self.probes.split(","))
-        return args
+        data = { "is_oneoff": True,
+                 "definitions": [
+                     {"description": "", "port": self.port} ],
+                 "probes": [
+                     {"requested": self.requested} ] }
+        if self.old_measurement is not None:
+            data["probes"][0]["requested"] = 500 # Dummy value, anyway,
+                                                    # but necessary to get
+                                                    # all the probes
+            # TODO: the huge value of "requested" makes us wait a very long time
+            data["probes"][0]["type"] = "msm"
+            data["probes"][0]["value"] = self.old_measurement
+            data["definitions"][0]["description"] += (" from probes of measurement #%s" % self.old_measurement)
+        else:
+            if self.probes is not None:
+                data["probes"][0]["type"] = "probes"
+                data["probes"][0]["value"] = self.probes
+            else:
+                if self.country is not None:
+                    data["probes"][0]["type"] = "country"
+                    data["probes"][0]["value"] = self.country
+                    data["definitions"][0]["description"] += (" from %s" % self.country)
+                elif self.area is not None:
+                    data["probes"][0]["type"] = "area"
+                    data["probes"][0]["value"] = self.area
+                    data["definitions"][0]["description"] += (" from %s" % self.area)
+                elif self.asn is not None:
+                    data["probes"][0]["type"] = "asn"
+                    data["probes"][0]["value"] = self.asn
+                    data["definitions"][0]["description"] += (" from AS #%s" % self.asn)
+                else:
+                    data["probes"][0]["type"] = "area"
+                    data["probes"][0]["value"] = "WW"
+                    data["definitions"][0]["description"] += " from the whole world"
+        if self.ipv6:
+            data["definitions"][0]['af'] = 6
+        else:
+            data["definitions"][0]['af'] = 4 
+        data["probes"][0]["tags"] = {}
+        if self.include is not None:
+            data["probes"][0]["tags"]["include"] = self.include
+        if self.exclude is not None:
+            data["probes"][0]["tags"]["exclude"] = self.exclude
+        return args, data
     
 
 class JsonRequest(urllib.request.Request):

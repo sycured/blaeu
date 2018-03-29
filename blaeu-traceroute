@@ -95,9 +95,9 @@ def specificParse(config, option, value):
     result = True
     if option == "--protocol" or option == "-j":
         if value.upper() != "UDP" and value.upper() != "ICMP" and value.upper() != "TCP":
-            usage("Protocol must be UDP or ICMP or TCP")
+            usage("Protocol must be UDP or ICMP or TCP: %s rejected" % value.upper())
             sys.exit(1)
-            config.protocol = value.upper()
+        config.protocol = value.upper()
     elif option == "--size" or option == "-z":
         config.size = int(value)
     elif option == "--first_hop" or option == "-y":
@@ -114,7 +114,7 @@ def specificParse(config, option, value):
         result = False
     return result
   
-args = config.parse("zjxbdy", ["format", "size=", "protocol=", "first_hop=", "max_hops=",
+args, data = config.parse("zj:i:x:bd:y", ["format", "size=", "protocol=", "first_hop=", "max_hops=",
                                "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
@@ -133,47 +133,16 @@ if not is_ip_address(target):
     print(("Target must be an IP address, NOT AN HOST NAME"), file=sys.stderr)
     sys.exit(1)
 
-data = { "is_oneoff": True,
-         "definitions": [
-           { "target": target, "description": "Traceroute %s" % target,
-            "type": "traceroute", "protocol": config.protocol} ],
-            "probes": [
-             { "requested": config.requested} ] }
+data["definitions"][0]["description"] = ("Traceroute %s" % target) + data["definitions"][0]["description"]
+data["definitions"][0]["type"] = "traceroute"
+data["definitions"][0]["protocol"] = config.protocol
+
 if config.size is not None:
     data["definitions"][0]['size'] = config.size    
-if config.port is not None:
-    data["definitions"][0]['port'] = config.port    
 if config.first_hop is not None:
     data["definitions"][0]['first_hop'] = config.first_hop
 if config.max_hops is not None:
     data["definitions"][0]['max_hops'] = config.max_hops    
-if config.probes is not None:
-    data["probes"][0]["type"] = "probes"
-    data["probes"][0]["value"] = config.probes
-else:
-    if config.country is not None:
-        data["probes"][0]["type"] = "country"
-        data["probes"][0]["value"] = config.country
-        data["definitions"][0]["description"] += (" from %s" % country)
-    elif config.area is not None:
-        data["probes"][0]["type"] = "area"
-        data["probes"][0]["value"] = config.area
-        data["definitions"][0]["description"] += (" from %s" % area)
-    elif config.asn is not None:
-        data["probes"][0]["type"] = "asn"
-        data["probes"][0]["value"] = config.asn
-        data["definitions"][0]["description"] += (" from AS #%s" % asn)
-    elif config.old_measurement is not None:
-        data["probes"][0]["requested"] = 1000 # Dummy value, anyway,
-        # but necessary to get
-        # all the probes
-        # TODO: the huge value of "requested" makes us wait a very long time
-        data["probes"][0]["type"] = "msm"
-        data["probes"][0]["value"] = config.old_measurement
-        data["definitions"][0]["description"] += (" from probes of measurement #%s" % config.old_measurement)
-    else:
-        data["probes"][0]["type"] = "area"
-        data["probes"][0]["value"] = "WW"
     
 if target.find(':') > -1:
     af = 6

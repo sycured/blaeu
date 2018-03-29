@@ -65,7 +65,7 @@ def specificParse(config, option, value):
         result = False
     return result
 
-args = config.parse("iksep", ["issuer", "serial", "expiration", "key", "no-sni"], specificParse, usage)
+(args, data) = config.parse("iksep", ["issuer", "serial", "expiration", "key", "no-sni"], specificParse, usage)
 
 if len(args) != 1:
     usage()
@@ -73,44 +73,22 @@ if len(args) != 1:
 target = args[0]
 
 if config.measurement_id is None:
-        data = { "is_oneoff": True,
-                 "definitions": [
-                   { "target": target, "description": "X.509 cert of %s" % target,
-                     "type": "sslcert", "port": config.port} ],
-                 "probes": [
-                     { "requested": config.requested} ] }
-        if config.country is not None:
-            data["probes"][0]["value"] = config.country
-            data["definitions"][0]["description"] += (" from %s" % config.country)
-        elif config.area is not None:
-            data["probes"][0]["type"] = "area"
-            data["probes"][0]["value"] = config.area
-            data["definitions"][0]["description"] += (" from %s" % config.area)
-        elif config.asn is not None:
-            data["probes"][0]["type"] = "asn"
-            data["probes"][0]["value"] = config.asn
-            data["definitions"][0]["description"] += (" from AS #%s" % config.asn)
-        else:
-            data["probes"][0]["type"] = "area"
-            data["probes"][0]["value"] = "WW"
-            data["definitions"][0]["description"] += " from the whole world"
-        if config.ipv6:
-            data["definitions"][0]['af'] = 6
-        else:
-            data["definitions"][0]['af'] = 4 
-        if config.sni:
-            data["definitions"][0]['hostname'] = target
+    data["definitions"][0]["target"] = target
+    data["definitions"][0]["type"] = "sslcert"
+    data["definitions"][0]["description"] = "X.509 cert of %s" % target
+    if self.sni:
+        data["definitions"][0]['hostname'] = target
 
-        if config.verbose:
-            print(data)
+    if config.verbose:
+        print(data)
 
-        measurement = Blaeu.Measurement(data)
-        if config.verbose:
-                print("Measurement #%s to %s uses %i probes" % (measurement.id, target,
-                                                            measurement.num_probes))
-        rdata = measurement.results(wait=True, percentage_required=config.percentage_required)
+    measurement = Blaeu.Measurement(data)
+    if config.verbose:
+            print("Measurement #%s to %s uses %i probes" % (measurement.id, target,
+                                                        measurement.num_probes))
+    rdata = measurement.results(wait=True, percentage_required=config.percentage_required)
 else:
-    measurement = Blaeu.Measurement(data=None, id=measurement_id)
+    measurement = Blaeu.Measurement(data=None, id=config.measurement_id)
     rdata = measurement.results(wait=False)
 
 sets = collections.defaultdict(Set)

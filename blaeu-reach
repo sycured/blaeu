@@ -16,7 +16,6 @@ Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 import json
 import time
 import os
-import string
 import sys
 import time
 import socket
@@ -74,7 +73,7 @@ def specificParse(config, option, value):
         result = False
     return result
     
-args = config.parse("bos:d:z", ["by_probe", "tests=", "size=", "machinereadable",
+args, data = config.parse("bos:d:z:", ["by_probe", "tests=", "size=", "machinereadable",
                               "displayprobes"], specificParse,
                     usage)
 
@@ -83,58 +82,22 @@ if len(targets) == 0:
     usage("No target found")
     sys.exit(1)
     
-if config.the_probes is not None:
-    requested = len(the_probes.split(","))
 if config.verbose and config.machine_readable:
     usage("Specify verbose *or* machine-readable output")
     sys.exit(1)
 if config.display_probes and config.machine_readable:
     usage("Display probes *or* machine-readable output")
     sys.exit(1)
-data = { "is_oneoff": True,
-         "definitions": [
-           { "type": "ping", "packets": config.tests, "size": config.size} ],
-         "probes": [
-             { "requested": config.requested} ] }
-data["probes"][0]["tags"] = {}
-if config.include is not None:
-    data["probes"][0]["tags"]["include"] = config.include
-if config.exclude is not None:
-    data["probes"][0]["tags"]["exclude"] = config.exclude
-if config.the_probes is not None:
-    data["probes"][0]["type"] = "probes"
-    data["probes"][0]["value"] = the_probes
-else:
-    if config.country is not None:
-        data["probes"][0]["type"] = "country"
-        data["probes"][0]["value"] = config.country
-    elif config.area is not None:
-        data["probes"][0]["type"] = "area"
-        data["probes"][0]["value"] = config.area
-    elif config.asn is not None:
-        data["probes"][0]["type"] = "asn"
-        data["probes"][0]["value"] = config.asn
-    elif config.prefix is not None:
-        data["probes"][0]["type"] = "prefix"
-        data["probes"][0]["value"] = config.prefix
-    else:
-        data["probes"][0]["type"] = "area"
-        data["probes"][0]["value"] = "WW"
+data["definitions"][0]["type"] = "ping"
+data["definitions"][0]["packets"] = config.tests
+data["definitions"][0]["size"] = config.size
 
 for target in targets:
     if not is_ip_address(target):
         print(("Target must be an IP address, NOT AN HOST NAME"), file=sys.stderr)
         sys.exit(1)
     data["definitions"][0]["target"] = target
-    data["definitions"][0]["description"] = "Ping %s" % target
-    if config.country is not None:
-        data["definitions"][0]["description"] += (" from %s" % config.country)
-    if config.area is not None:
-        data["definitions"][0]["description"] += (" from %s" % config.area)
-    if config.asn is not None:
-        data["definitions"][0]["description"] += (" from AS #%s" % config.asn)
-    if config.prefix is not None:
-        data["definitions"][0]["description"] += (" from prefix %s" % config.prefix)
+    data["definitions"][0]["description"] = ("Ping %s" % target) + data["definitions"][0]["description"]
     if target.find(':') > -1:
         af = 6
         # TODO allows to specify stable probes https://labs.ripe.net/Members/chris_amin/new-ripe-atlas-probe-stability-system-tags
@@ -145,14 +108,6 @@ for target in targets:
         if config.include is None:
             data["probes"][0]["tags"]["include"] = ["system-ipv4-works"] # Some probes cannot do ICMP outgoing (firewall?)
     data["definitions"][0]['af'] = af
-    if config.old_measurement is not None:
-            data["probes"][0]["requested"] = 500 # Dummy value, anyway,
-                                                    # but necessary to get
-                                                    # all the probes
-            # TODO: the huge value of "requested" makes us wait a very long time
-            data["probes"][0]["type"] = "msm"
-            data["probes"][0]["value"] = config.old_measurement
-            data["definitions"][0]["description"] += (" from probes of measurement #%s" % config.old_measurement)
     if config.measurement_id is None:
         if config.verbose:
             print(data)
