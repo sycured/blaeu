@@ -36,7 +36,6 @@ config.display_validation = False
 config.edns_size = None
 config.dnssec = False
 config.dnssec_checking = True
-config.machine_readable = False
 config.nameserver = None
 config.recursive = True
 config.sort = False
@@ -57,7 +56,6 @@ def usage(msg=None):
     print("Usage: %s domain-name" % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
-    --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
     --displayresolvers or -l : display the resolvers IP addresses (WARNING: big lists)
     --norecursive or -Z : asks the resolver to NOT recurse (default is to recurse, note --norecursive works ONLY if asking a specific resolver, not with the default one)
     --dnssec or -D : asks the resolver the DNSSEC records
@@ -105,8 +103,6 @@ def specificParse(config, option, value):
             config.display_rtt = True
         elif option == "--severalperprobe":
             config.only_one_per_probe = False
-        elif option == "--machinereadable" or option == "-b":
-            config.machine_readable = True
         else:
             result = False
         return result
@@ -117,8 +113,7 @@ args, data = config.parse("q:ZDkSx:ljB:", ["type=", "ednssize=",
                                      "dnssec", "nsid", "norecursive",
                                      "tcp", "checkingdisabled",
                                      "nameserver=", "sort",
-                                     "severalperprobe",
-                                     "machine_readable"], specificParse,
+                                     "severalperprobe"], specificParse,
                     usage)
 
 if len(args) != 1:

@@ -28,7 +28,6 @@ config = Blaeu.Config()
 config.tests = 3 # ICMP packets per probe
 config.by_probe = False # Default is to count by test, not by probe
 config.display_probes = False
-config.machine_readable = False
 
 class Set():
     def __init__(self):
@@ -48,7 +47,6 @@ def usage(msg=None):
     print("Usage: %s target-IP-address ..." % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
-    --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
     --tests=N or -d N : send N ICMP packets from each probe (default is %s)
     --by_probe : count the percentage of success by probe, not by test (useless if --tests=1)
     """ % (config.tests), file=sys.stderr)
@@ -59,13 +57,11 @@ def specificParse(config, option, value):
         config.tests = int(value)
     elif option == "--by_probe":
         config.by_probe = True
-    elif option == "--machinereadable" or option == "-b":
-        config.machine_readable = True
     else:
         result = False
     return result
     
-args, data = config.parse("bd:", ["by_probe", "tests=", "machinereadable"], specificParse,
+args, data = config.parse("d:", ["by_probe", "tests="], specificParse,
                     usage)
 
 targets = args

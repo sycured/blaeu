@@ -87,6 +87,7 @@ class Config:
         self.requested = 5 # Probes
         self.default_requested = True
         self.percentage_required = 0.9
+        self.machine_readable = False
         self.measurement_id = None
         self.display_probes = False
         self.ipv4 = False
@@ -117,6 +118,7 @@ class Config:
         --port=N or -t N : destination port for TCP (default is %s)
         --size=N or -z N : number of bytes in the packet (default is %s bytes)
         --ipv4 or -4 : uses IPv4 (default is IPv6, except if the parameter or option is an IP address, then it is automatically found)
+        --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
         """ % (self.requested, self.percentage_required, self.port, self.size), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
@@ -124,11 +126,11 @@ class Config:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "4a:c:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
+                                           "4a:bc:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
                                            ["requested=", "country=", "area=", "asn=", "prefix=",
                                             "port=", "percentage=", "include", "exclude",
                                             "measurement-ID=", "old_measurement=", "displayprobes", "size=",
-                                            "ipv4", "verbose", "help"] +
+                                            "ipv4", "machinereadable", "verbose", "help"] +
                                            longOptsSpecific)
             for option, value in optlist:
                 if option == "--country" or option == "-c":
@@ -165,6 +167,8 @@ class Config:
                 elif option == "--include" or option == "-i":
                     # TODO allows to specify stable probes https://labs.ripe.net/Members/chris_amin/new-ripe-atlas-probe-stability-system-tags
                     self.include = value.split(",")
+                elif option == "--machinereadable" or option == "-b":
+                    self.machine_readable = True
                 elif option == "--help" or option == "-h":
                     usage()
                     sys.exit(0)

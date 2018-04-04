@@ -3,6 +3,7 @@ use another letter:
 
 -4 : IPv4
 -a : area of the probes (currently WW West North-Central South-Central North-East South-East)
+-b : machine-readable output
 -c : country of the probes
 -e : Atlas tags to exclude
 -f : IP prefix of the probes (WARNING: it has to be an exact prefix in the global routing table)
