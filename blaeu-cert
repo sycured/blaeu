@@ -42,23 +42,23 @@ def usage(msg=None):
     print("Usage: %s target-name-or-IP" % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
-    --issuer or -i : displays the issuer (default is to display the name)
+    --issuer or -I : displays the issuer (default is to display the name)
     --key or -k : displays the public key (default is to display the name)
-    --serial or -s : displays the serial number (default is to display the name)
-    --expiration or -e : displays the expiration datetime (default is to display the name)
-    --nosni : do not send the SNI (Server Name Indication) (default is to send it)""", file=sys.stderr)
+    --serial or -S : displays the serial number (default is to display the name)
+    --expiration or -E : displays the expiration datetime (default is to display the name)
+    --no-sni : do not send the SNI (Server Name Indication) (default is to send it)""", file=sys.stderr)
 
 def specificParse(config, option, value):
     result = True
-    if option == "--issuer" or option == "-i":
+    if option == "--issuer" or option == "-I":
         config.display = "i"
     elif option == "--key" or option == "-k":
         config.display = "k"
-    elif option == "--serial" or option == "-s":
+    elif option == "--serial" or option == "-S":
         config.display = "s"
-    elif option == "--expiration" or option == "-e":
+    elif option == "--expiration" or option == "-E":
         config.display = "e"
-    elif option == "--nosni":
+    elif option == "--no-sni":
         config.sni = False
     elif option == "--port" or option == "-t":
         config.port = int(value)
@@ -66,10 +66,10 @@ def specificParse(config, option, value):
         result = False
     return result
 
-(args, data) = config.parse("iksep", ["issuer", "serial", "expiration", "key", "no-sni"], specificParse, usage)
+(args, data) = config.parse("IkSE", ["issuer", "serial", "expiration", "key", "no-sni"], specificParse, usage)
 
 if len(args) != 1:
-    usage()
+    usage("Not the good number of arguments")
     sys.exit(1)
 target = args[0]
 
@@ -133,7 +133,7 @@ for result in rdata:
                     content = x509.get_issuer()
                 elif config.display == "k":
                     key = x509.get_pubkey()
-                    # TODO better display of the key
+                    # TODO #2
                     content = "%s, type %s, %s bits" % (key, key.type(), key.bits())
                 elif config.display == "s":
                     content = format(x509.get_serial_number(), '05x')
