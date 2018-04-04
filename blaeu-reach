@@ -26,7 +26,6 @@ import Blaeu
 config = Blaeu.Config()
 # Default values
 config.tests = 3 # ICMP packets per probe
-config.size = 64
 config.by_probe = False # Default is to count by test, not by probe
 config.display_probes = False
 config.machine_readable = False
@@ -52,16 +51,13 @@ def usage(msg=None):
     --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
     --displayprobes or -o : display the failing probes numbers (WARNING: may create a big list)
     --tests=N or -d N : send N ICMP packets from each probe (default is %s)
-    --size=N or -z N : packets of size N (in bytes, default is %s)
     --by_probe : count the percentage of success by probe, not by test (useless if --tests=1)
-    """ % (config.tests, config.size), file=sys.stderr)
+    """ % (config.tests), file=sys.stderr)
 
 def specificParse(config, option, value):
     result = True
     if option == "--tests" or option == "-d":
         config.tests = int(value)
-    elif option == "--size" or option == "-z":
-        config.size = int(value)
     elif option == "--by_probe":
         config.by_probe = True
     elif option == "--machinereadable" or option == "-b":
@@ -72,7 +68,7 @@ def specificParse(config, option, value):
         result = False
     return result
     
-args, data = config.parse("bos:d:z:", ["by_probe", "tests=", "size=", "machinereadable",
+args, data = config.parse("bos:d:", ["by_probe", "tests=", "machinereadable",
                               "displayprobes"], specificParse,
                     usage)
 
@@ -89,7 +85,6 @@ if config.display_probes and config.machine_readable:
     sys.exit(1)
 data["definitions"][0]["type"] = "ping"
 data["definitions"][0]["packets"] = config.tests
-data["definitions"][0]["size"] = config.size
 
 for target in targets:
     if not is_ip_address(target):

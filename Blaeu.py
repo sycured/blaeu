@@ -90,6 +90,7 @@ class Config:
         self.display_probes = False
         self.ipv6 = False
         self.port = 80
+        self.size = 64
         # Tags
         self.exclude = None
         self.include = None
@@ -113,17 +114,18 @@ class Config:
         --include TAGS or -i TAGS : limits the measurements to probes with these tags (a comma-separated list)
         --exclude TAGS or -e TAGS : excludes from measurements the probes with these tags (a comma-separated list)
         --port=N or -t N : destination port for TCP (default is %s)
-        """ % (self.requested, self.percentage_required, self.port), file=sys.stderr)
+        --size=N or -z N : number of bytes in the packet (default is %s bytes)
+        """ % (self.requested, self.percentage_required, self.port, self.size), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
         if usage is None:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "6a:c:e:f:g:hi:m:n:op:r:s:t:v" + shortOptsSpecific,
+                                           "6a:c:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
                                            ["requested=", "country=", "area=", "asn=", "prefix=",
                                             "port=", "percentage=", "include", "exclude",
-                                            "measurement-ID", "old_measurement=", "displayprobes",
+                                            "measurement-ID", "old_measurement=", "displayprobes", "size=",
                                             "ipv6", "verbose", "help"] +
                                            longOptsSpecific)
             for option, value in optlist:
@@ -150,6 +152,8 @@ class Config:
                     self.verbose = True
                 elif option == "--ipv6" or option == "-6":
                     self.ipv6 = True
+                elif option == "--size" or option == "-z":
+                    self.size = int(value)
                 elif option == "--displayprobes" or option == "-o":
                     self.display_probes = True
                 elif option == "--exclude" or option == "-e":
@@ -234,6 +238,8 @@ class Config:
             data["definitions"][0]['af'] = 6
         else:
             data["definitions"][0]['af'] = 4 
+        if self.size is not None:
+            data["definitions"][0]['size'] = self.size    
         data["probes"][0]["tags"] = {}
         if self.include is not None:
             data["probes"][0]["tags"]["include"] = self.include

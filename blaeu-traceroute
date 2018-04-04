@@ -30,7 +30,6 @@ config.protocol = "UDP"
 config.format = False
 config.do_lookup = False
 config.do_reverse_lookup = False
-config.size = None
 config.first_hop = 1
 config.max_hops = 32
 
@@ -80,7 +79,6 @@ def usage(msg=None):
     --protocol=PROTO or -j PROTO : uses this protocol (UDP, TCP or ICMP, default is %s)
     --do_lookup : Enables IP lookup feature (default is disabled, may become interactive if the machine has several addresses)
     --do_reverse_lookup or -l : Enables reverse IP lookup feature for hops
-    --size=N or -i N : number of bytes in the packet (default unknown)
     --first_hop=N or -d N : TTL/max hop count for the first hop  (default %d)
     --max_hops=N or -x N : TTL/max hop count for the last hop  (default %d)
     """ % (config.protocol, config.first_hop, config.max_hops), file=sys.stderr)
@@ -98,8 +96,6 @@ def specificParse(config, option, value):
             usage("Protocol must be UDP or ICMP or TCP: %s rejected" % value.upper())
             sys.exit(1)
         config.protocol = value.upper()
-    elif option == "--size" or option == "-z":
-        config.size = int(value)
     elif option == "--first_hop" or option == "-y":
         config.first_hop = int(value)
     elif option == "--max_hops" or option == "-x":
@@ -114,7 +110,7 @@ def specificParse(config, option, value):
         result = False
     return result
   
-args, data = config.parse("zj:i:x:bd:y", ["format", "size=", "protocol=", "first_hop=", "max_hops=",
+args, data = config.parse("zj:x:bd:y", ["format", "protocol=", "first_hop=", "max_hops=",
                                "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
@@ -137,8 +133,6 @@ data["definitions"][0]["description"] = ("Traceroute %s" % target) + data["defin
 data["definitions"][0]["type"] = "traceroute"
 data["definitions"][0]["protocol"] = config.protocol
 
-if config.size is not None:
-    data["definitions"][0]['size'] = config.size    
 if config.first_hop is not None:
     data["definitions"][0]['first_hop'] = config.first_hop
 if config.max_hops is not None:

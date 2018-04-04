@@ -17,3 +17,4 @@ use another letter:
 -s : list of probes to use
 -t : port number (not used by all programs)
 -v : verbose
+-z : size of the test packets
