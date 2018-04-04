@@ -72,14 +72,14 @@ def lookup_ip(ip):
     return name
 
 def usage(msg=None):
-    print("Usage: %s target-IP-address" % sys.argv[0], file=sys.stderr)
+    print("Usage: %s target-IP-address-or-name" % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
     --format or -b : downloads the results and format them in a traditional traceroute way
     --protocol=PROTO or -j PROTO : uses this protocol (UDP, TCP or ICMP, default is %s)
-    --do_lookup : Enables IP lookup feature (default is disabled, may become interactive if the machine has several addresses)
+    --do_lookup or -d : Enables IP lookup feature (default is disabled, may become interactive if the machine has several addresses)
     --do_reverse_lookup or -l : Enables reverse IP lookup feature for hops
-    --first_hop=N or -d N : TTL/max hop count for the first hop  (default %d)
+    --first_hop=N or -y N : TTL/max hop count for the first hop  (default %d)
     --max_hops=N or -x N : TTL/max hop count for the last hop  (default %d)
     """ % (config.protocol, config.first_hop, config.max_hops), file=sys.stderr)
 
@@ -110,7 +110,7 @@ def specificParse(config, option, value):
         result = False
     return result
   
-args, data = config.parse("zj:x:bd:y", ["format", "protocol=", "first_hop=", "max_hops=",
+args, data = config.parse("j:x:bdy:", ["format", "protocol=", "first_hop=", "max_hops=",
                                "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
@@ -124,10 +124,10 @@ if config.do_lookup:
     if not target:
         print(("Unknown host name \"%s\"" % hostname), file=sys.stderr)
         sys.exit(1)
-        
-if not is_ip_address(target):
-    print(("Target must be an IP address, NOT AN HOST NAME"), file=sys.stderr)
-    sys.exit(1)
+else:        
+    if not is_ip_address(target):
+        print("Target must be an IP address, NOT AN HOST NAME (or use --do_lookup)", file=sys.stderr)
+        sys.exit(1)
 
 data["definitions"][0]["description"] = ("Traceroute %s" % target) + data["definitions"][0]["description"]
 data["definitions"][0]["type"] = "traceroute"
