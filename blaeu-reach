@@ -49,7 +49,6 @@ def usage(msg=None):
     config.usage(msg)
     print("""Also:
     --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
-    --displayprobes or -o : display the failing probes numbers (WARNING: may create a big list)
     --tests=N or -d N : send N ICMP packets from each probe (default is %s)
     --by_probe : count the percentage of success by probe, not by test (useless if --tests=1)
     """ % (config.tests), file=sys.stderr)
@@ -62,14 +61,11 @@ def specificParse(config, option, value):
         config.by_probe = True
     elif option == "--machinereadable" or option == "-b":
         config.machine_readable = True
-    elif option == "--displayprobes" or option == "-o":
-        config.display_probes = True
     else:
         result = False
     return result
     
-args, data = config.parse("bos:d:", ["by_probe", "tests=", "machinereadable",
-                              "displayprobes"], specificParse,
+args, data = config.parse("bd:", ["by_probe", "tests=", "machinereadable"], specificParse,
                     usage)
 
 targets = args
@@ -95,7 +91,6 @@ for target in targets:
     data["definitions"][0]["description"] = ("Ping %s" % target) + data["definitions"][0]["description"]
     if target.find(':') > -1:
         af = 6
-        # TODO allows to specify stable probes https://labs.ripe.net/Members/chris_amin/new-ripe-atlas-probe-stability-system-tags
         if config.include is None:
             data["probes"][0]["tags"]["include"] = ["system-ipv6-works"]
     else:

@@ -163,6 +163,7 @@ class Config:
                 elif option == "--exclude" or option == "-e":
                     self.exclude = value.split(",")
                 elif option == "--include" or option == "-i":
+                    # TODO allows to specify stable probes https://labs.ripe.net/Members/chris_amin/new-ripe-atlas-probe-stability-system-tags
                     self.include = value.split(",")
                 elif option == "--help" or option == "-h":
                     usage()
