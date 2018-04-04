@@ -29,7 +29,7 @@ import Blaeu
 
 config = Blaeu.Config()
 # Default values
-config.qtype = 'A'
+config.qtype = 'AAAA'
 config.display_resolvers = False
 config.display_rtt = False
 config.display_validation = False
@@ -59,10 +59,10 @@ def usage(msg=None):
     print("""Also:
     --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
     --displayresolvers or -l : display the resolvers IP addresses (WARNING: big lists)
-    --norecursive or -z : asks the resolver to NOT recurse (default is to recurse, note --norecursive works ONLY if asking a specific resolver, not with the default one)
-    --dnssec or -d : asks the resolver the DNSSEC records
+    --norecursive or -Z : asks the resolver to NOT recurse (default is to recurse, note --norecursive works ONLY if asking a specific resolver, not with the default one)
+    --dnssec or -D : asks the resolver the DNSSEC records
     --nsid : asks the resolver with NSID (name server identification)
-    --ednssize=N or -b N : asks for EDNS with the "payload size" option (default is very old DNS, without EDNS)
+    --ednssize=N or -B N : asks for EDNS with the "payload size" option (default is very old DNS, without EDNS)
     --tcp: uses TCP (default is UDP)
     --checkingdisabled or -k : asks the resolver to NOT perform DNSSEC validation
     --displayvalidation or -j : displays the DNSSEC validation status
@@ -78,15 +78,15 @@ def specificParse(config, option, value):
         result = True 
         if option == "--type" or option == "-q":
             config.qtype = value
-        elif option == "--norecursive" or option == "-z":
+        elif option == "--norecursive" or option == "-Z":
             config.recursive = False
-        elif option == "--dnssec" or option == "-d":
+        elif option == "--dnssec" or option == "-D":
             config.dnssec = True
         elif option == "--nsid":
             config.nsid = True
         elif option == "--probe_id":
             config.probe_id = True
-        elif option == "--ednssize" or option == "-b":
+        elif option == "--ednssize" or option == "-B":
             config.edns_size = int(value)
         elif option == "--tcp":
             config.protocol = "TCP"
@@ -111,7 +111,7 @@ def specificParse(config, option, value):
             result = False
         return result
     
-args, data = config.parse("q:zdb:kSx:lj", ["type=", "ednssize=",
+args, data = config.parse("q:ZDkSx:ljB:", ["type=", "ednssize=",
                                      "displayresolvers", "probe_id",
                                      "displayrtt", "displayvalidation",
                                      "dnssec", "nsid", "norecursive",
@@ -294,14 +294,14 @@ for nameserver in config.nameservers:
                     if config.nsid:
                         for opt in msg.options:
                             if opt.otype == dns.edns.NSID:
-                                myset.append("NSID: " + opt.data)
+                                myset.append("NSID: " + str(opt.data))
                     successes += 1
                     if msg.rcode() == dns.rcode.NOERROR:
                         probe_resolves = True
                         # If we test an authoritative server, and it returns a delegation, we won't see anything...
                         if result_i['result']['ANCOUNT'] == 0:
                             if config.verbose:
-                                print("Warning: reply at probe %s has no answers: may be the server returned a delegation?" % probe_id)
+                                print("Warning: reply at probe %s has no answers: may be the server returned a delegation, or does not have data of type %s?" % (probe_id, config.qtype))
                         for rrset in msg.answer:
                             for rdata in rrset:
                                 if rdata.rdtype == qtype_num:
