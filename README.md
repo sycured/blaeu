@@ -13,10 +13,10 @@ Usage requires a RIPE Atlas API key (which itself requires a RIPE account), and 
 
 You can then use the four programs (`-h` will give you a complete list of their options):
 
-* `blaeu-reach target-IP-address ̀ (test reachability of the target, like `ping`)
-* `blaeu-traceroute target-IP-address ̀ (like `traceroute`)
-* `blaeu-resolve name ̀ (use the DNS to resolve the name)
-* `blaeu-cert name ` (display the PKIX certificate)
+* `blaeu-reach target-IP-address` (test reachability of the target, like `ping`)
+* `blaeu-traceroute target-IP-address` (like `traceroute`)
+* `blaeu-resolve name` (use the DNS to resolve the name)
+* `blaeu-cert name` (display the PKIX certificate)
 
 You may also be interested by [my article at RIPE Labs](https://labs.ripe.net/Members/stephane_bortzmeyer/using-ripe-atlas-to-debug-network-connectivity-problems), although the tools' installation method and names are now different.
 
