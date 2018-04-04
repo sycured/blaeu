@@ -1,20 +1,20 @@
 Generic short options (used by all programs). Specific options must
 use another letter:
 
--6 : IPv6
--a : area of the probes
+-4 : IPv4
+-a : area of the probes (currently WW West North-Central South-Central North-East South-East)
 -c : country of the probes
 -e : Atlas tags to exclude
--f : IP prefix of the probes
--g : use the probes of this measurement 
+-f : IP prefix of the probes (WARNING: it has to be an exact prefix in the global routing table)
+-g : use the probes of this previous measurement 
 -h : help
 -i : Atlas tags to include
 -m : the ID of the measurement you want to analyze (instead of starting a new one)
 -n : AS number of the probes
 -o : display the relevant probes in the results
--p : percentage of responding probes required
+-p : percentage of responding probes required (better not use it)
 -r : number of probes you ask for
--s : list of probes to use
+-s : list of probes to use (comma-separated)
 -t : port number (not used by all programs)
 -v : verbose
--z : size of the test packets
+-z : size of the test packets (not used by all programs)

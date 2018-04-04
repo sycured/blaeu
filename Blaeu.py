@@ -17,6 +17,7 @@ import json
 import time
 import urllib.request, urllib.error, urllib.parse
 import random
+import copy
 import sys
 import getopt
 import string
@@ -88,7 +89,7 @@ class Config:
         self.percentage_required = 0.9
         self.measurement_id = None
         self.display_probes = False
-        self.ipv6 = False
+        self.ipv4 = False
         self.port = 80
         self.size = 64
         # Tags
@@ -115,6 +116,7 @@ class Config:
         --exclude TAGS or -e TAGS : excludes from measurements the probes with these tags (a comma-separated list)
         --port=N or -t N : destination port for TCP (default is %s)
         --size=N or -z N : number of bytes in the packet (default is %s bytes)
+        --ipv4 or -4 : uses IPv4 (default is IPv6, except if the parameter or option is an IP address, then it is automatically found)
         """ % (self.requested, self.percentage_required, self.port, self.size), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
@@ -122,11 +124,11 @@ class Config:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "6a:c:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
+                                           "4a:c:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
                                            ["requested=", "country=", "area=", "asn=", "prefix=",
                                             "port=", "percentage=", "include", "exclude",
-                                            "measurement-ID", "old_measurement=", "displayprobes", "size=",
-                                            "ipv6", "verbose", "help"] +
+                                            "measurement-ID=", "old_measurement=", "displayprobes", "size=",
+                                            "ipv4", "verbose", "help"] +
                                            longOptsSpecific)
             for option, value in optlist:
                 if option == "--country" or option == "-c":
@@ -148,10 +150,12 @@ class Config:
                     self.port = int(value)
                 elif option == "--measurement-ID" or option == "-m":
                     self.measurement_id = value
+                elif option == "--old_measurement" or option == "-g":
+                    self.old_measurement = value
                 elif option == "--verbose" or option == "-v":
                     self.verbose = True
-                elif option == "--ipv6" or option == "-6":
-                    self.ipv6 = True
+                elif option == "--ipv4" or option == "-4":
+                    self.ipv4 = True
                 elif option == "--size" or option == "-z":
                     self.size = int(value)
                 elif option == "--displayprobes" or option == "-o":
@@ -173,32 +177,49 @@ class Config:
             sys.exit(1)
         if self.country is not None:
             if self.asn is not None or self.area is not None or self.prefix is not None or \
-               self.probes is not None:
+               self.probes is not None or self.old_measurement is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.area is not None:
             if self.asn is not None or self.country is not None or self.prefix is not None or \
-               self.probes is not None:
+               self.probes is not None or self.old_measurement is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.asn is not None:
             if self.area is not None or self.country is not None or self.prefix is not None or \
-               self.probes is not None:
+               self.probes is not None or self.old_measurement is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.probes is not None:
             if self.country is not None or self.area is not None or self.asn or \
-               self.prefix is not None:
+               self.prefix is not None or self.old_measurement is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.prefix is not None:
             if self.country is not None or self.area is not None or self.asn or \
+               self.probes is not None or self.old_measurement is not None:
+                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
+                sys.exit(1)
+        elif self.old_measurement is not None:
+            if self.country is not None or self.area is not None or self.asn or self.prefix is not None or \
                self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
-        if self.probes is not None:
+        if self.probes is not None or self.old_measurement is not None:
             if not self.default_requested:
                 print("Warning: --requested=%d ignored since a list of probes was requested" % self.requested)
+        if self.measurement_id is not None:
+            if self.country is not None:
+                print("Warning: --country ignored since we use probes from a previous measurement")
+            elif self.area is not None:
+                print("Warning: --area ignored since we use probes from a previous measurement")
+            elif self.prefix is not None:
+                print("Warning: --prefix ignored since we use probes from a previous measurement")
+            elif self.asn is not None:
+                print("Warning: --asn ignored since we use probes from a previous measurement")
+            elif self.probes is not None:
+                print("Warning: --probes ignored since we use probes from a previous measurement")
+        if self.probes is not None:
             self.requested = len(self.probes.split(","))
         data = { "is_oneoff": True,
                  "definitions": [
@@ -230,21 +251,30 @@ class Config:
                     data["probes"][0]["type"] = "asn"
                     data["probes"][0]["value"] = self.asn
                     data["definitions"][0]["description"] += (" from AS #%s" % self.asn)
+                elif self.prefix is not None:
+                    data["probes"][0]["type"] = "prefix"
+                    data["probes"][0]["value"] = self.prefix
+                    data["definitions"][0]["description"] += (" from prefix %s" % self.prefix)
                 else:
                     data["probes"][0]["type"] = "area"
                     data["probes"][0]["value"] = "WW"
-                    data["definitions"][0]["description"] += " from the whole world"
-        if self.ipv6:
-            data["definitions"][0]['af'] = 6
+        if self.ipv4:
+            data["definitions"][0]['af'] = 4
         else:
-            data["definitions"][0]['af'] = 4 
+            data["definitions"][0]['af'] = 6 
         if self.size is not None:
             data["definitions"][0]['size'] = self.size    
         data["probes"][0]["tags"] = {}
         if self.include is not None:
-            data["probes"][0]["tags"]["include"] = self.include
+            data["probes"][0]["tags"]["include"] = copy.copy(self.include)
+        else:
+            data["probes"][0]["tags"]["include"] = []
+        if self.ipv4:
+            data["probes"][0]["tags"]["include"].append("system-ipv4-works")
+        else:
+            data["probes"][0]["tags"]["include"].append("system-ipv6-works")
         if self.exclude is not None:
-            data["probes"][0]["tags"]["exclude"] = self.exclude
+            data["probes"][0]["tags"]["exclude"] = copy.copy(self.exclude)
         return args, data
     
 
@@ -305,8 +335,11 @@ class Measurement():
                 self.id = results["measurements"][0]
                 conn.close()
             except urllib.error.HTTPError as e:
-                raise RequestSubmissionError("Status %s, reason \"%s\"" % \
-                                             (e.code, e.read()))
+                raise RequestSubmissionError("Status %s, reason \"%s : %s\"" % \
+                                             (e.code, e.reason, e.read()))
+            except urllib.error.URLError as e:
+                raise RequestSubmissionError("Reason \"%s\"" % \
+                                             (e.reason))
 
 
             self.gen = random.Random()
@@ -344,8 +377,8 @@ class Measurement():
                     else:
                         raise InternalError("Internal error in #%s, unexpected status when querying the measurement fields: \"%s\"" % (self.id, meta["status"]))
                     conn.close()
-                except urllib.error.HTTPError as e:
-                    raise FieldsQueryError("%s" % e.read())
+                except urllib.error.URLError as e:
+                    raise FieldsQueryError("%s" % e.reason)
         else:
             self.id = id
             self.notification = None
@@ -355,7 +388,10 @@ class Measurement():
                 if e.code == 404:
                     raise MeasurementNotFound
                 else:
-                    raise MeasurementAccessError("%s" % e.read())
+                    raise MeasurementAccessError("HTTP %s, %s %s" % (e.code, e.reason, e.read()))
+            except urllib.error.URLError as e:
+                raise MeasurementAccessError("Reason \"%s\"" % \
+                                             (e.reason))
             result_status = json.loads(conn.read().decode('utf-8'))
             status = result_status["status"]["name"]
             self.status = status
@@ -367,7 +403,10 @@ class Measurement():
                 if e.code == 404:
                     raise MeasurementNotFound
                 else:
-                    raise MeasurementAccessError("%s" % e.read())
+                    raise MeasurementAccessError("%s %s" % (e.reason, e.read()))
+            except urllib.error.URLError as e:
+                raise MeasurementAccessError("Reason \"%s\"" % \
+                                             (e.reason))
             result_status = json.loads(conn.read().decode('utf-8')) 
             self.num_probes = len(result_status["probes"])
         try:
@@ -376,7 +415,10 @@ class Measurement():
                 if e.code == 404:
                         raise MeasurementNotFound
                 else:
-                        raise MeasurementAccessError("%s" % e.read())
+                        raise MeasurementAccessError("%s %s" % (e.reason, e.read()))
+        except urllib.error.URLError as e:
+                raise MeasurementAccessError("Reason \"%s\"" % \
+                                             (e.reason))
         result_status = json.loads(conn.read().decode('utf-8'))
         self.time = time.gmtime(result_status["start_time"])
         self.description = result_status["description"]
@@ -443,13 +485,16 @@ class Measurement():
                 except urllib.error.HTTPError as e:
                     if e.code != 404: # Yes, we may have no result file at
                         # all for some time
-                        raise ResultError(str(e.code) + " " + e.reason)
+                        raise ResultError(str(e.code) + " " + e.reason + " " + e.read())
+                except urllib.error.URLError as e:
+                    raise ResultError("Reason \"%s\"" % \
+                                             (e.reason))
             if result_data is None:
                 raise ResultError("No results retrieved")
         else:
             try:
                 conn = urllib.request.urlopen(request)
                 result_data = json.loads(conn.read().decode('utf-8'))
-            except urllib.error.HTTPError as e:
-                raise ResultError(e.read())
+            except urllib.error.URLError as e:
+                raise ResultError(e.reason)
         return result_data

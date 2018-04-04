@@ -132,17 +132,31 @@ if not is_ip_address(target):
 data["definitions"][0]["description"] = ("Traceroute %s" % target) + data["definitions"][0]["description"]
 data["definitions"][0]["type"] = "traceroute"
 data["definitions"][0]["protocol"] = config.protocol
+data["definitions"][0]["target"] = target
 
 if config.first_hop is not None:
     data["definitions"][0]['first_hop'] = config.first_hop
 if config.max_hops is not None:
     data["definitions"][0]['max_hops'] = config.max_hops    
     
-if target.find(':') > -1:
+if target.find(':') > -1: # TODO: or use is_ip_address(str) from blaeu-reach?
+    config.ipv4 = False
     af = 6
+    if config.include is not None:
+        data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+        data["probes"][0]["tags"]["include"].append("system-ipv6-works")
+    else:
+        data["probes"][0]["tags"]["include"] = ["system-ipv6-works",]
 else:
+    config.ipv4 = True
     af = 4
+    if config.include is not None:
+        data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+        data["probes"][0]["tags"]["include"].append("system-ipv4-works")
+    else:
+        data["probes"][0]["tags"]["include"] = ["system-ipv4-works",]
 data["definitions"][0]['af'] = af
+
 if config.measurement_id is None:
     if config.verbose:
         print(data)

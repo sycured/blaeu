@@ -84,6 +84,7 @@ if config.display_probes and config.machine_readable:
     usage("Display probes *or* machine-readable output")
     sys.exit(1)
 data["definitions"][0]["type"] = "ping"
+del data["definitions"][0]["port"] 
 data["definitions"][0]["packets"] = config.tests
 
 for target in targets:
@@ -177,7 +178,9 @@ for target in targets:
     if len(targets) > 1 and not config.machine_readable:
         print("")
     if config.display_probes:
-        print(list(failed_probes.keys()))
+        all = list(failed_probes.keys())
+        if all != []:
+            print(all)
     if config.machine_readable:
         if num_rtt != 0:
             percent_rtt = total_rtt/num_rtt

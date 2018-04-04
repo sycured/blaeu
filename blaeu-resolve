@@ -18,6 +18,8 @@ import json
 import sys
 import time
 import base64
+import re
+import copy
 import collections
 
 # DNS Python http://www.dnspython.org/
@@ -68,7 +70,7 @@ def usage(msg=None):
     --sort or -S : sort the result sets
     --type or -q : query type (default is %s)
     --severalperprobe or -p : count all the resolvers of each probe (default is to count only the first to reply)
-    --nameserver=IPaddr[,...] or -x IPaddr : query this name server (default is to query the probe's resolver)
+    --nameserver=name_or_IPaddr[,...] or -x name_or_IPaddr : query this name server (default is to query the probe's resolver)
     --probe_id : prepend probe ID (and timestamp) to the domain name (default is to abstain)
     """ % (config.qtype), file=sys.stderr)
 
@@ -105,9 +107,6 @@ def specificParse(config, option, value):
             config.only_one_per_probe = False
         elif option == "--machinereadable" or option == "-b":
             config.machine_readable = True
-        # TODO: when using option --nameserver, set IPv6
-        # automatically depending on the address family? Not easy,
-        # the nameserver can be identified by name. Forbid it?
         else:
             result = False
         return result
@@ -129,6 +128,8 @@ if len(args) != 1:
 domainname = args[0]
 
 data["definitions"][0]["type"] = "dns"
+del data["definitions"][0]["size"]
+del data["definitions"][0]["port"]
 data["definitions"][0]["query_argument"] = domainname
 data["definitions"][0]["description"] = ("DNS resolution of %s" % domainname) + data["definitions"][0]["description"]
 data["definitions"][0]["query_class"] = "IN"
@@ -163,22 +164,33 @@ if config.nameserver is None:
     config.nameservers = [None,]
 
 for nameserver in config.nameservers:
-    data["probes"][0]["tags"] = {}
     if nameserver is None:
         data["definitions"][0]["use_probe_resolver"] = True
         # Exclude probes which do not have at least one working resolver
-        if config.include is None:
-            data["probes"][0]["tags"]["include"] = ["system-resolves-a-correctly",
-                                                    "system-resolves-aaaa-correctly"] 
+        data["probes"][0]["tags"]["include"].append("system-resolves-a-correctly")
+        data["probes"][0]["tags"]["include"].append("system-resolves-aaaa-correctly")
     else:
-        data["probes"][0]["tags"]["include"] = []
         data["definitions"][0]["use_probe_resolver"] = False
         data["definitions"][0]["target"] = nameserver
-        data["definitions"][0]["description"] += (" via nameserver %s" % nameserver) # TODO if several nameservers, they addresses are added after each other :-( 
-    if config.ipv6:
-        data["probes"][0]["tags"]["include"].append("system-ipv6-works")
-    else:
-        data["probes"][0]["tags"]["include"].append("system-ipv4-works")
+        data["definitions"][0]["description"] += (" via nameserver %s" % nameserver) # TODO if several nameservers, they addresses are added after each other :-(
+        if nameserver.find(':') > -1: # TODO: or use is_ip_address(str) from blaeu-reach?
+            config.ipv4 = False
+            data["definitions"][0]['af'] = 6 
+            if config.include is not None:
+                data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+                data["probes"][0]["tags"]["include"].append("system-ipv6-works")
+            else:
+                data["probes"][0]["tags"]["include"] = ["system-ipv6-works",]
+        elif re.match("^[0-9.]+$", nameserver):
+            config.ipv4 = True
+            data["definitions"][0]['af'] = 4
+            if config.include is not None:
+                data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+                data["probes"][0]["tags"]["include"].append("system-ipv4-works")
+            else:
+                data["probes"][0]["tags"]["include"] = ["system-ipv4-works",]
+        else: # Probably an host name
+            pass
     if config.old_measurement is not None:
         data["probes"][0]["requested"] = 500 # Dummy value, anyway, 
                                                 # but necessary to get
@@ -187,10 +199,6 @@ for nameserver in config.nameservers:
         data["probes"][0]["type"] = "msm"
         data["probes"][0]["value"] = config.old_measurement
         data["definitions"][0]["description"] += (" from probes of measurement #%s" % config.old_measurement)
-    if config.ipv6:
-        data["definitions"][0]['af'] = 6
-    else:
-        data["definitions"][0]['af'] = 4 
     if config.measurement_id is None:
         if config.verbose:
             print(data)

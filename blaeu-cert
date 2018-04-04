@@ -16,6 +16,7 @@ import json
 import time
 import os
 import string
+import re
 import sys
 import time
 import socket
@@ -74,9 +75,34 @@ target = args[0]
 
 if config.measurement_id is None:
     data["definitions"][0]["target"] = target
+    del data["definitions"][0]["port"]
+    del data["definitions"][0]["size"] 
     data["definitions"][0]["type"] = "sslcert"
     data["definitions"][0]["description"] = "X.509 cert of %s" % target
-    if self.sni:
+    if target.find(':') > -1: # TODO: or use is_ip_address(str) from blaeu-reach?
+        config.ipv4 = False
+        af = 6
+        if config.include is not None:
+            data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+            data["probes"][0]["tags"]["include"].append("system-ipv6-works")
+        else:
+            data["probes"][0]["tags"]["include"] = ["system-ipv6-works",]
+    elif re.match("^[0-9.]+$", target):
+        config.ipv4 = True
+        af = 4
+        if config.include is not None:
+            data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+            data["probes"][0]["tags"]["include"].append("system-ipv4-works")
+        else:
+            data["probes"][0]["tags"]["include"] = ["system-ipv4-works",]
+    else:
+        # Hostname
+        if config.ipv4:
+            af = 4
+        else:
+            af = 6
+    data["definitions"][0]['af'] = af
+    if config.sni:
         data["definitions"][0]['hostname'] = target
 
     if config.verbose:
