@@ -351,7 +351,7 @@ for nameserver in config.nameservers:
             if all_timeout:
                 if config.verbose:
                     print("Warning, probe %s never got reply from any resolver" % (probe_id))
-                # TODO these results appear as duplicate(s)
+                # TODO these results appear as duplicate(s): issue #5
                 set_str = "TIMEOUT(S)"
             else:
                 myset.sort()
