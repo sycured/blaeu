@@ -11,6 +11,10 @@ For installation, you can use usual Python tools, for instance:
 
     pip3 install blaeu
 
+(On a Debian machine, the prerequitises are packages python3-pip,
+python3-openssl and python3-cymruwhois. On other systems, pip3 will
+install the dependencies.)
+
 Usage requires a RIPE Atlas API key (which itself requires a RIPE
 account), and RIPE Atlas credits. If you don't have a RIPE account,
 `register first <https://access.ripe.net/>`__. Once you have an account,
@@ -43,7 +47,9 @@ Name
 ----
 
 It comes from the `famous Dutch
-cartographer <https://en.wikipedia.org/wiki/Willem_Blaeu>`__.
+cartographer <https://en.wikipedia.org/wiki/Willem_Blaeu>`__. The logo
+of the project comes from his "Theatrum Orbis Terrarum" (see `the
+source <https://commons.wikimedia.org/wiki/File:Blaeu_1645_-_Livonia_vulgo_Lyefland.jpg>`__.
 
 Reference site
 --------------
