@@ -49,7 +49,7 @@ Name
 It comes from the `famous Dutch
 cartographer <https://en.wikipedia.org/wiki/Willem_Blaeu>`__. The logo
 of the project comes from his "Theatrum Orbis Terrarum" (see `the
-source <https://commons.wikimedia.org/wiki/File:Blaeu_1645_-_Livonia_vulgo_Lyefland.jpg>`__.
+source <https://commons.wikimedia.org/wiki/File:Blaeu_1645_-_Livonia_vulgo_Lyefland.jpg>`__).
 
 Reference site
 --------------
