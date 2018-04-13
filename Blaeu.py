@@ -128,7 +128,7 @@ class Config:
             optlist, args = getopt.getopt (sys.argv[1:],
                                            "4a:bc:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
                                            ["requested=", "country=", "area=", "asn=", "prefix=",
-                                            "port=", "percentage=", "include", "exclude",
+                                            "port=", "percentage=", "include=", "exclude=",
                                             "measurement-ID=", "old_measurement=", "displayprobes", "size=",
                                             "ipv4", "machinereadable", "verbose", "help"] +
                                            longOptsSpecific)
