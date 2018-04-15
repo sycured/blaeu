@@ -186,14 +186,6 @@ for nameserver in config.nameservers:
                 data["probes"][0]["tags"]["include"] = ["system-ipv4-works",]
         else: # Probably an host name
             pass
-    if config.old_measurement is not None:
-        data["probes"][0]["requested"] = 500 # Dummy value, anyway, 
-                                                # but necessary to get
-                                                # all the probes
-        # TODO: the huge value of "requested" makes us wait a very long time
-        data["probes"][0]["type"] = "msm"
-        data["probes"][0]["value"] = config.old_measurement
-        data["definitions"][0]["description"] += (" from probes of measurement #%s" % config.old_measurement)
     if config.measurement_id is None:
         if config.verbose:
             print(data)
