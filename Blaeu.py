@@ -12,6 +12,8 @@ Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 
 """
 
+VERSION = '1.1.1'
+
 import os
 import json
 import time
@@ -128,7 +130,7 @@ class Config:
             optlist, args = getopt.getopt (sys.argv[1:],
                                            "4a:bc:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
                                            ["requested=", "country=", "area=", "asn=", "prefix=", "probes=",
-                                            "port=", "percentage=", "include=", "exclude=",
+                                            "port=", "percentage=", "include=", "exclude=", "version",
                                             "measurement-ID=", "old_measurement=", "displayprobes", "size=",
                                             "ipv4", "machinereadable", "verbose", "help"] +
                                            longOptsSpecific)
@@ -171,6 +173,9 @@ class Config:
                     self.machine_readable = True
                 elif option == "--help" or option == "-h":
                     usage()
+                    sys.exit(0)
+                elif option == "--version":
+                    print("Blaeu version %s" % VERSION)
                     sys.exit(0)
                 else:
                     parseResult = parseSpecific(self, option, value)
@@ -280,9 +285,10 @@ class Config:
             data["probes"][0]["tags"]["include"].append("system-ipv6-works")
         if self.exclude is not None:
             data["probes"][0]["tags"]["exclude"] = copy.copy(self.exclude)
+        if self.verbose:
+            print("Blaeu version %s" % VERSION)
         return args, data
     
-
 class JsonRequest(urllib.request.Request):
     def __init__(self, url):
         urllib.request.Request.__init__(self, url)

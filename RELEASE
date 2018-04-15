@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+VERSION=$(./blaeu-reach --version | cut -d' ' -f3)
+if [ -z "$VERSION" ]; then
+   echo "No version found" >&2
+   exit 1
+fi	
+PACKAGE=blaeu
+git commit .
+git tag release-${VERSION}
+python3 setup.py sdist
+gpg --detach-sign -a dist/${PACKAGE}-${VERSION}.tar.gz
+twine upload dist/${PACKAGE}-${VERSION}.tar.gz dist/${PACKAGE}-${VERSION}.tar.gz.asc

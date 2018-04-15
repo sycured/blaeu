@@ -11,6 +11,8 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
+import Blaeu
+
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -25,13 +27,12 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
-
 setup(
     name='blaeu',  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
-    version='1.1.0',  # Required
+    version=Blaeu.VERSION,  # Required
 
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
