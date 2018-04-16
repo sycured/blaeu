@@ -34,14 +34,15 @@ of their options):
 -  ``blaeu-cert name`` (display the PKIX certificate)
 
 You may also be interested by `my article at RIPE
-Labs <https://labs.ripe.net/Members/stephane_bortzmeyer/using-ripe-atlas-to-debug-network-connectivity-problems>`__,
-although the tools' installation method and names are now different.
+Labs <https://labs.ripe.net/Members/stephane_bortzmeyer/creating-ripe-atlas-one-off-measurements-with-blaeu>`__.
 
 Blaeu requires Python 3.
 
 Note that `the old
 version <https://github.com/RIPE-Atlas-Community/ripe-atlas-community-contrib>`__
-ran on Python 2 but is no longer maintained.
+ran on Python 2 but is no longer maintained. (It was `partially
+documented at RIPE
+Labs <https://labs.ripe.net/Members/stephane_bortzmeyer/using-ripe-atlas-to-debug-network-connectivity-problems>`__.)
 
 Name
 ----

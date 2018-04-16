@@ -20,11 +20,11 @@ You can then use the four programs (`-h` will give you a complete list of their 
 * `blaeu-resolve name` (use the DNS to resolve the name)
 * `blaeu-cert name` (display the PKIX certificate)
 
-You may also be interested by [my article at RIPE Labs](https://labs.ripe.net/Members/stephane_bortzmeyer/using-ripe-atlas-to-debug-network-connectivity-problems), although the tools' installation method and names are now different.
+You may also be interested by [my article at RIPE Labs](https://labs.ripe.net/Members/stephane_bortzmeyer/creating-ripe-atlas-one-off-measurements-with-blaeu).
 
 Blaeu requires Python 3.
 
-Note that [the old version](https://github.com/RIPE-Atlas-Community/ripe-atlas-community-contrib) ran on Python 2 but is no longer maintained.
+Note that [the old version](https://github.com/RIPE-Atlas-Community/ripe-atlas-community-contrib) ran on Python 2 but is no longer maintained. (It was [partially documented at RIPE Labs](https://labs.ripe.net/Members/stephane_bortzmeyer/using-ripe-atlas-to-debug-network-connectivity-problems).)
 
 Name
 ----
