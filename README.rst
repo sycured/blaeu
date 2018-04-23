@@ -18,9 +18,9 @@ install the dependencies.)
 Usage requires a RIPE Atlas API key (which itself requires a RIPE
 account), and RIPE Atlas credits. If you don't have a RIPE account,
 `register first <https://access.ripe.net/>`__. Once you have an account,
-`create a key <https://atlas.ripe.net/keys/>`__ and put it in
-``~/.atlas/auth``. If you don't have Atlas credits, host a probe,or
-become a
+`create a key <https://atlas.ripe.net/keys/>`__, grant it the right to
+start new measurements, and put the key in ``~/.atlas/auth``. If you
+don't have Atlas credits, host a probe,or become a
 `LIR <https://www.ripe.net/manage-ips-and-asns/resource-management/faq/independent-resources/phase-three/what-is-a-local-internet-registry-lir>`__
 or ask a friend.
 
