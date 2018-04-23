@@ -327,13 +327,13 @@ for nameserver in config.nameservers:
                     else:
                         sets[set_str].rtt +=  result_i['result']['rt']
             except dns.name.BadLabelType:
-                if not machine_readable:
+                if not config.machine_readable:
                     print("Probe %s failed (bad label in name)" % probe_id)
             except dns.message.TrailingJunk:
-                if not machine_readable:
+                if not config.machine_readable:
                     print("Probe %s failed (trailing junk)" % probe_id)
             except dns.exception.FormError:
-                if not machine_readable:
+                if not config.machine_readable:
                     print("Probe %s failed (malformed DNS message)" % probe_id)
             if config.only_one_per_probe:
                     break
