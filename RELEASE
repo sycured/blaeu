@@ -8,7 +8,9 @@ if [ -z "$VERSION" ]; then
    exit 1
 fi	
 PACKAGE=blaeu
-git commit .
+# git commit returns 1 if there is nothing to commit. We use
+# diff-index to check that everything is committed
+git diff-index --quiet HEAD 
 git tag release-${VERSION}
 python3 setup.py sdist
 gpg --detach-sign -a dist/${PACKAGE}-${VERSION}.tar.gz
