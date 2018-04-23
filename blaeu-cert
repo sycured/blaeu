@@ -60,8 +60,6 @@ def specificParse(config, option, value):
         config.display = "e"
     elif option == "--no-sni":
         config.sni = False
-    elif option == "--port" or option == "-t":
-        config.port = int(value)
     else:
         result = False
     return result
@@ -75,8 +73,6 @@ target = args[0]
 
 if config.measurement_id is None:
     data["definitions"][0]["target"] = target
-    del data["definitions"][0]["port"]
-    del data["definitions"][0]["size"] 
     data["definitions"][0]["type"] = "sslcert"
     data["definitions"][0]["description"] = "X.509 cert of %s" % target
     if target.find(':') > -1: # TODO: or use is_ip_address(str) from blaeu-reach?
@@ -142,7 +138,7 @@ for result in rdata:
                         detail = " (EXPIRED)"
                     # TODO: better format of the date?
                     content = "%s%s" % (x509.get_notAfter(), detail)
-                value = "%s%s" % (content, detail) # TODO better display of the name? https://pyopenssl.readthedocs.org/en/stable/api/crypto.html#x509name-objects
+                value = "%s%s" % (content, detail) # TODO better display of the name? https://pyopenssl.readthedocs.org/en/stable/api/crypto.html#x509name-objects See also bug #2, which is related.
         else:
             if 'err' in result:
                 error = result['err']
