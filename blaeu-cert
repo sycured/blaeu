@@ -75,6 +75,7 @@ if config.measurement_id is None:
     data["definitions"][0]["target"] = target
     data["definitions"][0]["type"] = "sslcert"
     data["definitions"][0]["description"] = "X.509 cert of %s" % target
+    del data["definitions"][0]["size"] # Meaningless argument
     if target.find(':') > -1: # TODO: or use is_ip_address(str) from blaeu-reach?
         config.ipv4 = False
         af = 6
