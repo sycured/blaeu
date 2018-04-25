@@ -75,7 +75,7 @@ def usage(msg=None):
     print("Usage: %s target-IP-address-or-name" % sys.argv[0], file=sys.stderr)
     config.usage(msg)
     print("""Also:
-    --format or -b : downloads the results and format them in a traditional traceroute way
+    --format or -k : downloads the results and format them in a traditional traceroute way
     --protocol=PROTO or -j PROTO : uses this protocol (UDP, TCP or ICMP, default is %s)
     --do_lookup or -d : Enables IP lookup feature (default is disabled, may become interactive if the machine has several addresses)
     --do_reverse_lookup or -l : Enables reverse IP lookup feature for hops
@@ -100,7 +100,7 @@ def specificParse(config, option, value):
         config.first_hop = int(value)
     elif option == "--max_hops" or option == "-x":
         config.max_hops = int(value)
-    elif option == "--format" or option == "-b":
+    elif option == "--format" or option == "-k":
         config.format = True
     elif option == "--do_lookup" or option == "-d":
         config.do_lookup = True
@@ -110,7 +110,7 @@ def specificParse(config, option, value):
         result = False
     return result
   
-args, data = config.parse("j:x:bdy:", ["format", "protocol=", "first_hop=", "max_hops=",
+args, data = config.parse("j:x:kdy:", ["format", "protocol=", "first_hop=", "max_hops=",
                                "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
