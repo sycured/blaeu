@@ -110,7 +110,7 @@ def specificParse(config, option, value):
         result = False
     return result
   
-args, data = config.parse("j:x:bdy:", ["format", "protocol=", "first_hop=", "max_hops=",
+args, data = config.parse("j:x:bdyl:", ["format", "protocol=", "first_hop=", "max_hops=",
                                "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
