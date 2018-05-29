@@ -19,6 +19,7 @@ import os
 import sys
 import time
 import socket
+import copy
 import collections
 
 import Blaeu
@@ -86,14 +87,24 @@ for target in targets:
     data["definitions"][0]["target"] = target
     data["definitions"][0]["description"] = ("Ping %s" % target) + data["definitions"][0]["description"]
     if target.find(':') > -1:
-        af = 6
-        if config.include is None:
-            data["probes"][0]["tags"]["include"] = ["system-ipv6-works"]
+        config.ipv4 = False
+        data["definitions"][0]['af'] = 6
     else:
-        af = 4
-        if config.include is None:
-            data["probes"][0]["tags"]["include"] = ["system-ipv4-works"] # Some probes cannot do ICMP outgoing (firewall?)
-    data["definitions"][0]['af'] = af
+        config.ipv4 = True
+        data["definitions"][0]['af'] = 4
+    # Yes, it was aready done in parse() but we have to do it again now that we
+    # know the address family of the target. See bug #9. Note that we silently
+    # override a possible explicit choice of the user (her -4 may be ignored).
+    if config.include is not None:
+        data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+    else:
+        data["probes"][0]["tags"]["include"] = []
+    if config.ipv4:
+        data["probes"][0]["tags"]["include"].append("system-ipv4-works") # Some probes cannot do ICMP outgoing (firewall?)
+    else:
+        data["probes"][0]["tags"]["include"].append("system-ipv6-works")
+    if config.exclude is not None:
+        data["probes"][0]["tags"]["exclude"] = copy.copy(config.exclude)
     if config.measurement_id is None:
         if config.verbose:
             print(data)
