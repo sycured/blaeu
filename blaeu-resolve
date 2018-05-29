@@ -134,7 +134,7 @@ data["definitions"][0]["type"] = "dns"
 del data["definitions"][0]["size"]
 del data["definitions"][0]["port"]
 data["definitions"][0]["query_argument"] = domainname
-data["definitions"][0]["description"] = ("DNS resolution of %s" % domainname) + data["definitions"][0]["description"]
+data["definitions"][0]["description"] = ("DNS resolution of %s/%s" % (domainname, config.qtype)) + data["definitions"][0]["description"]
 data["definitions"][0]["query_class"] = "IN"
 data["definitions"][0]["query_type"] = config.qtype
 if config.edns_size is not None and config.protocol == "UDP":

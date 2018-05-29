@@ -280,7 +280,7 @@ class Config:
         else:
             data["probes"][0]["tags"]["include"] = []
         if self.ipv4:
-            data["probes"][0]["tags"]["include"].append("system-ipv4-works")
+            data["probes"][0]["tags"]["include"].append("system-ipv4-works") # Some probes cannot do ICMP outgoing (firewall?)
         else:
             data["probes"][0]["tags"]["include"].append("system-ipv6-works")
         if self.exclude is not None:
