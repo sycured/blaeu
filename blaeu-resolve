@@ -42,6 +42,7 @@ config.sort = False
 config.nsid = False
 config.only_one_per_probe = True
 config.protocol = "UDP"
+config.tls = False
 config.probe_id = False
 
 # Constants
@@ -62,6 +63,7 @@ def usage(msg=None):
     --nsid : asks the resolver with NSID (name server identification)
     --ednssize=N or -B N : asks for EDNS with the "payload size" option (default is very old DNS, without EDNS)
     --tcp: uses TCP (default is UDP)
+    --tls: uses TLS (implies TCP)
     --checkingdisabled or -k : asks the resolver to NOT perform DNSSEC validation
     --displayvalidation or -j : displays the DNSSEC validation status
     --displayrtt or -i : displays the average RTT
@@ -88,6 +90,8 @@ def specificParse(config, option, value):
             config.edns_size = int(value)
         elif option == "--tcp":
             config.protocol = "TCP"
+        elif option == "--tls":
+            config.tls = True
         elif option == "--checkingdisabled" or option == "-k":
             config.dnssec_checking = False
         elif option == "--sort" or option == "-S":
@@ -111,7 +115,7 @@ args, data = config.parse("q:ZDkSx:ljB:", ["type=", "ednssize=",
                                      "displayresolvers", "probe_id",
                                      "displayrtt", "displayvalidation",
                                      "dnssec", "nsid", "norecursive",
-                                     "tcp", "checkingdisabled",
+                                     "tcp", "tls", "checkingdisabled",
                                      "nameserver=", "sort",
                                      "severalperprobe"], specificParse,
                     usage)
@@ -122,6 +126,10 @@ if len(args) != 1:
 
 domainname = args[0]
 
+if config.tls:
+    config.protocol = "TCP"
+    # We don't set the port (853) but Atlas does it for us
+    
 data["definitions"][0]["type"] = "dns"
 del data["definitions"][0]["size"]
 del data["definitions"][0]["port"]
@@ -145,6 +153,8 @@ if config.recursive:
     data["definitions"][0]["set_rd_bit"] = True
 else:
     data["definitions"][0]["set_rd_bit"] = False
+if config.tls:
+    data["definitions"][0]["tls"] = True
 if config.probe_id:
     data["definitions"][0]["prepend_probe_id"] = True
 data["definitions"][0]["protocol"] = config.protocol
