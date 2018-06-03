@@ -9,7 +9,7 @@ For installation, you can use usual Python tools, for instance:
 pip3 install blaeu
 ```
 
-(On a Debian machine, the prerequitises are packages python3-pip, python3-openssl and python3-cymruwhois. On other systems, pip3 will install the dependencies.)
+(On a Debian machine, the prerequitises are packages python3-pip, python3-openssl, python3-dnspython, and python3-cymruwhois. This is only if you install manually, otherwise pip3 will install the dependencies.)
 
 Usage requires a RIPE Atlas API key (which itself requires a RIPE account), and RIPE Atlas credits. If you don't have a RIPE account, [register first](https://access.ripe.net/). Once you have an account, [create a key](https://atlas.ripe.net/keys/), grant it the right to start new measurements, and put the key in `~/.atlas/auth`. If you don't have Atlas credits, host a probe,or become a [LIR](https://www.ripe.net/manage-ips-and-asns/resource-management/faq/independent-resources/phase-three/what-is-a-local-internet-registry-lir) or ask a friend.
 
