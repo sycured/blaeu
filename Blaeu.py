@@ -112,7 +112,7 @@ class Config:
         --prefix=IPprefix or -f IPprefix : limits the measurements to one IP prefix (default is all prefixes) WARNING: it must be an *exact* prefix in the global routing table
         --probes=N or -s N : selects the probes by giving explicit ID (one ID or a comma-separated list)
         --requested=N or -r N : requests N probes (default is %s)
-        --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %2.2f)
+        --percentage=X or -p X : stops the program as soon as X %% of the probes reported a result (default is %s %%)
         --measurement-ID=N or -m N : do not start a measurement, just analyze a former one
         --old_measurement MSMID or -g MSMID : uses the probes of measurement MSMID
         --include TAGS or -i TAGS : limits the measurements to probes with these tags (a comma-separated list)
@@ -121,7 +121,7 @@ class Config:
         --size=N or -z N : number of bytes in the packet (default is %s bytes)
         --ipv4 or -4 : uses IPv4 (default is IPv6, except if the parameter or option is an IP address, then it is automatically found)
         --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
-        """ % (self.requested, self.percentage_required, self.port, self.size), file=sys.stderr)
+        """ % (self.requested, int(self.percentage_required*100), self.port, self.size), file=sys.stderr)
 
     def parse(self, shortOptsSpecific="", longOptsSpecific=[], parseSpecific=None, usage=None):
         if usage is None:

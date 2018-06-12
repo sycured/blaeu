@@ -45,6 +45,9 @@ config.protocol = "UDP"
 config.tls = False
 config.probe_id = False
 
+# Local values
+edns_size = None
+
 # Constants
 MAXLEN = 80 # Maximum length of a displayed resource record
 
@@ -139,14 +142,17 @@ data["definitions"][0]["query_class"] = "IN"
 data["definitions"][0]["query_type"] = config.qtype
 if config.edns_size is not None and config.protocol == "UDP":
     data["definitions"][0]["udp_payload_size"] = config.edns_size
+    edns_size = config.edns_size
 if config.dnssec or config.display_validation: # https://atlas.ripe.net/docs/api/v2/reference/#!/measurements/Dns_Type_Measurement_List_POST
     data["definitions"][0]["set_do_bit"] = True
     if config.edns_size is None and config.protocol == "UDP":
-        data["definitions"][0]["udp_payload_size"] = 4096
+        edns_size = 4096
 if config.nsid: 
     data["definitions"][0]["set_nsid_bit"] = True
     if config.edns_size is None and config.protocol == "UDP":
-        data["definitions"][0]["udp_payload_size"] = 1024
+        edns_size = 1024
+if edns_size is not None and config.protocol == "UDP":
+    data["definitions"][0]["udp_payload_size"] = edns_size
 if not config.dnssec_checking:
     data["definitions"][0]["set_cd_bit"] = True
 if config.recursive:
@@ -299,7 +305,7 @@ for nameserver in config.nameservers:
                         # If we test an authoritative server, and it returns a delegation, we won't see anything...
                         if result_i['result']['ANCOUNT'] == 0:
                             if config.verbose:
-                                print("Warning: reply at probe %s has no answers: may be the server returned a delegation, or does not have data of type %s?" % (probe_id, config.qtype))
+                                print("Warning: reply at probe %s has no answers: may be the server returned a delegation, or does not have data of type %s?" % (probe_id, config.qtype), file=sys.stderr)
                         for rrset in msg.answer:
                             for rdata in rrset:
                                 if rdata.rdtype == qtype_num:
@@ -307,7 +313,10 @@ for nameserver in config.nameservers:
                         if config.display_validation and (msg.flags & dns.flags.AD):
                             myset.append(" (Authentic Data flag) ")
                         if (msg.flags & dns.flags.TC):
-                            myset.append(" (TRUNCATED May have to use --ednssize) ")
+                            if edns_size is not None:
+                                myset.append(" (TRUNCATED - EDNS buffer size was %d ) " % edns_size)
+                            else:
+                                myset.append(" (TRUNCATED - May have to use --ednssize) ")
                     else:
                         if msg.rcode() == dns.rcode.REFUSED: # Not SERVFAIL since
                             # it can be legitimate (DNSSEC problem, for instance)
@@ -339,17 +348,17 @@ for nameserver in config.nameservers:
                         sets[set_str].rtt +=  result_i['result']['rt']
             except dns.name.BadLabelType:
                 if not config.machine_readable:
-                    print("Probe %s failed (bad label in name)" % probe_id)
+                    print("Probe %s failed (bad label in name)" % probe_id, file=sys.stderr)
             except dns.message.TrailingJunk:
                 if not config.machine_readable:
-                    print("Probe %s failed (trailing junk)" % probe_id)
+                    print("Probe %s failed (trailing junk)" % probe_id, file=sys.stderr)
             except dns.exception.FormError:
                 if not config.machine_readable:
-                    print("Probe %s failed (malformed DNS message)" % probe_id)
+                    print("Probe %s failed (malformed DNS message)" % probe_id, file=sys.stderr)
             if config.only_one_per_probe:
                     break
         if not probe_resolves and first_error != "" and config.verbose:
-            print("Warning, probe %s has no working resolver (first error is \"%s\")" % (probe_id, first_error))
+            print("Warning, probe %s has no working resolver (first error is \"%s\")" % (probe_id, first_error), file=sys.stderr)
         if not resolver_responds:
             if all_timeout and not config.only_one_per_probe:
                 if config.verbose:
