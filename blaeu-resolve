@@ -69,7 +69,7 @@ def usage(msg=None):
     --displayrtt or -i : displays the average RTT
     --sort or -S : sort the result sets
     --type or -q : query type (default is %s)
-    --severalperprobe or -p : count all the resolvers of each probe (default is to count only the first to reply)
+    --severalperprobe : count all the resolvers of each probe (default is to count only the first to reply)
     --nameserver=name_or_IPaddr[,...] or -x name_or_IPaddr : query this name server (default is to query the probe's resolver)
     --probe_id : prepend probe ID (and timestamp) to the domain name (default is to abstain)
     """ % (config.qtype), file=sys.stderr)
@@ -351,15 +351,14 @@ for nameserver in config.nameservers:
         if not probe_resolves and first_error != "" and config.verbose:
             print("Warning, probe %s has no working resolver (first error is \"%s\")" % (probe_id, first_error))
         if not resolver_responds:
-            if all_timeout:
+            if all_timeout and not config.only_one_per_probe:
                 if config.verbose:
-                    print("Warning, probe %s never got reply from any resolver" % (probe_id))
-                # TODO these results appear as duplicate(s): issue #5
-                set_str = "TIMEOUT(S)"
+                    print("Warning, probe %s never got reply from any resolver" % (probe_id), file=sys.stderr)
+                set_str = "TIMEOUT(S) on all resolvers"
+                sets[set_str].total += 1
             else:
                 myset.sort()
                 set_str = " ".join(myset)
-            sets[set_str].total += 1
     if config.sort:
         sets_data = sorted(sets, key=lambda s: sets[s].total, reverse=True)
     else:
