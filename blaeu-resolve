@@ -214,7 +214,8 @@ for nameserver in config.nameservers:
         results = measurement.results(wait=False)
         if config.verbose:
             print("%i results from already-done measurement %s" % (len(results), measurement.id))
-
+    if len(results) == 0:
+        print("Warning: zero results. Measurement %s not terminated? May be retry later with --measurement-ID=N ?" % measurement.id, file=sys.stderr)
     probes = 0
     successes = 0
 
