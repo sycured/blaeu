@@ -123,7 +123,7 @@ for target in targets:
             print("%i results from already-done measurement #%s" % (len(rdata), measurement.id))
 
     if len(rdata) == 0:
-        print("Warning: zero results. Measurement %s not terminated? May be retry later with --measurement-ID=N ?" % measurement.id, file=sys.stderr)
+        print("Warning: zero results. Measurement not terminated? May be retry later with --measurement-ID=%s ?" % measurement.id, file=sys.stderr)
     total_rtt = 0
     num_rtt = 0
     num_error = 0

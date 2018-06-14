@@ -187,48 +187,44 @@ class Config:
             sys.exit(1)
         if self.country is not None:
             if self.asn is not None or self.area is not None or self.prefix is not None or \
-               self.probes is not None or self.old_measurement is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.area is not None:
             if self.asn is not None or self.country is not None or self.prefix is not None or \
-               self.probes is not None or self.old_measurement is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.asn is not None:
             if self.area is not None or self.country is not None or self.prefix is not None or \
-               self.probes is not None or self.old_measurement is not None:
+               self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.probes is not None:
             if self.country is not None or self.area is not None or self.asn or \
-               self.prefix is not None or self.old_measurement is not None:
+               self.prefix is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         elif self.prefix is not None:
             if self.country is not None or self.area is not None or self.asn or \
-               self.probes is not None or self.old_measurement is not None:
-                usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
-                sys.exit(1)
-        elif self.old_measurement is not None:
-            if self.country is not None or self.area is not None or self.asn or self.prefix is not None or \
                self.probes is not None:
                 usage("Specify country *or* area *or* ASn *or* prefix *or* the list of probes")
                 sys.exit(1)
         if self.probes is not None or self.old_measurement is not None:
             if not self.default_requested:
-                print("Warning: --requested=%d ignored since a list of probes was requested" % self.requested)
-        if self.measurement_id is not None:
+                print("Warning: --requested=%d ignored since a list of probes was requested" % self.requested, file=sys.stderr)
+        if self.old_measurement is not None:
             if self.country is not None:
-                print("Warning: --country ignored since we use probes from a previous measurement")
-            elif self.area is not None:
-                print("Warning: --area ignored since we use probes from a previous measurement")
-            elif self.prefix is not None:
-                print("Warning: --prefix ignored since we use probes from a previous measurement")
-            elif self.asn is not None:
-                print("Warning: --asn ignored since we use probes from a previous measurement")
-            elif self.probes is not None:
-                print("Warning: --probes ignored since we use probes from a previous measurement")
+                print("Warning: --country ignored since we use probes from a previous measurement", file=sys.stderr)
+            if self.area is not None:
+                print("Warning: --area ignored since we use probes from a previous measurement", file=sys.stderr)
+            if self.prefix is not None:
+                print("Warning: --prefix ignored since we use probes from a previous measurement", file=sys.stderr)
+            if self.asn is not None:
+                print("Warning: --asn ignored since we use probes from a previous measurement", file=sys.stderr)
+            if self.probes is not None:
+                print("Warning: --probes ignored since we use probes from a previous measurement", file=sys.stderr)
+            # TODO include and exclude should trigger a similar warning...
         if self.probes is not None:
             self.requested = len(self.probes.split(","))
         data = { "is_oneoff": True,
