@@ -1,21 +1,30 @@
 Generic short options (used by all programs). Specific options must
-use another letter:
+use another letter. Almost all those in lowercase are taken.:
 
 -4 : IPv4
 -a : area of the probes (currently WW West North-Central South-Central North-East South-East)
 -b : machine-readable output
 -c : country of the probes
+[ -d : used by --tests of reach --do_lookup of traceroute]
 -e : Atlas tags to exclude
 -f : IP prefix of the probes (WARNING: it has to be an exact prefix in the global routing table)
 -g : use the probes of this previous measurement 
 -h : help
 -i : Atlas tags to include
+[ -j : used by --protocol of traceroute, and --displayvalidation of resolve]
+[ -k : used by --key of cert or --format of traceroute]
+[ -l : used --do_reverse_lookup of traceroute]
 -m : the ID of the measurement you want to analyze (instead of starting a new one)
 -n : AS number of the probes
 -o : display the relevant probes in the results
 -p : percentage of responding probes required (better not use it)
+[ -q : used by --type of resolve]
 -r : number of probes you ask for
 -s : list of probes to use (comma-separated)
 -t : port number (not used by all programs)
+[ -u : AVAILABLE ]
 -v : verbose
+-w : spread (jitter)
+[ -x : used by --nameserver of resolve and --max_hops of traceroute]
+[ -y : used by --first_hop of traceroute]
 -z : size of the test packets (not used by all programs)

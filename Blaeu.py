@@ -12,7 +12,7 @@ Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 
 """
 
-VERSION = '1.1.4'
+VERSION = '1.1.5-BETA'
 
 import os
 import json
@@ -95,6 +95,7 @@ class Config:
         self.ipv4 = False
         self.port = 80
         self.size = 64
+        self.spread = None
         # Tags
         self.exclude = None
         self.include = None
@@ -120,6 +121,7 @@ class Config:
         --port=N or -t N : destination port for TCP (default is %s)
         --size=N or -z N : number of bytes in the packet (default is %s bytes)
         --ipv4 or -4 : uses IPv4 (default is IPv6, except if the parameter or option is an IP address, then it is automatically found)
+        --spread or -w : spreads the tests (add a delay before the tests)
         --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
         """ % (self.requested, int(self.percentage_required*100), self.port, self.size), file=sys.stderr)
 
@@ -128,11 +130,11 @@ class Config:
             usage = self.usage
         try:
             optlist, args = getopt.getopt (sys.argv[1:],
-                                           "4a:bc:e:f:g:hi:m:n:op:r:s:t:vz:" + shortOptsSpecific,
+                                           "4a:bc:e:f:g:hi:m:n:op:r:s:t:vw:z:" + shortOptsSpecific,
                                            ["requested=", "country=", "area=", "asn=", "prefix=", "probes=",
                                             "port=", "percentage=", "include=", "exclude=", "version",
                                             "measurement-ID=", "old_measurement=", "displayprobes", "size=",
-                                            "ipv4", "machinereadable", "verbose", "help"] +
+                                            "ipv4", "machinereadable", "spread=", "verbose", "help"] +
                                            longOptsSpecific)
             for option, value in optlist:
                 if option == "--country" or option == "-c":
@@ -162,6 +164,8 @@ class Config:
                     self.ipv4 = True
                 elif option == "--size" or option == "-z":
                     self.size = int(value)
+                elif option == "--spread" or option == "-w":
+                    self.spread = int(value)
                 elif option == "--displayprobes" or option == "-o":
                     self.display_probes = True
                 elif option == "--exclude" or option == "-e":
@@ -270,6 +274,8 @@ class Config:
             data["definitions"][0]['af'] = 6 
         if self.size is not None:
             data["definitions"][0]['size'] = self.size    
+        if self.spread is not None:
+            data["definitions"][0]['spread'] = self.spread
         data["probes"][0]["tags"] = {}
         if self.include is not None:
             data["probes"][0]["tags"]["include"] = copy.copy(self.include)
