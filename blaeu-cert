@@ -138,7 +138,7 @@ for result in rdata:
                     if x509.has_expired():
                         detail = " (EXPIRED)"
                     # TODO: better format of the date?
-                    content = "%s%s" % (x509.get_notAfter(), detail)
+                    content = "%s%s" % (x509.get_notAfter().decode(), detail)
                 value = "%s%s" % (content, detail) # TODO better display of the name? https://pyopenssl.readthedocs.org/en/stable/api/crypto.html#x509name-objects See also bug #2, which is related.
         else:
             if 'err' in result:
