@@ -69,7 +69,7 @@ def usage(msg=None):
     --tls: uses TLS (implies TCP)
     --checkingdisabled or -k : asks the resolver to NOT perform DNSSEC validation
     --displayvalidation or -j : displays the DNSSEC validation status
-    --displayrtt or -i : displays the average RTT
+    --displayrtt : displays the average RTT
     --sort or -S : sort the result sets
     --type or -q : query type (default is %s)
     --severalperprobe : count all the resolvers of each probe (default is to count only the first to reply)

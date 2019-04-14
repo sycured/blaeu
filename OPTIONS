@@ -12,8 +12,8 @@ use another letter. Almost all those in lowercase are taken.:
 -h : help
 -i : Atlas tags to include
 [ -j : used by --protocol of traceroute, and --displayvalidation of resolve]
-[ -k : used by --key of cert or --format of traceroute]
-[ -l : used --do_reverse_lookup of traceroute]
+[ -k : used by --key of cert or --format of traceroute or --checkingdisabled of resolve]
+[ -l : used --do_reverse_lookup of traceroute or --displayresolvers of resolve]
 -m : the ID of the measurement you want to analyze (instead of starting a new one)
 -n : AS number of the probes
 -o : display the relevant probes in the results
