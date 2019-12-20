@@ -93,6 +93,7 @@ class Config:
         self.measurement_id = None
         self.display_probes = False
         self.ipv4 = False
+        self.private = False
         self.port = 80
         self.size = 64
         self.spread = None
@@ -122,6 +123,7 @@ class Config:
         --size=N or -z N : number of bytes in the packet (default is %s bytes)
         --ipv4 or -4 : uses IPv4 (default is IPv6, except if the parameter or option is an IP address, then it is automatically found)
         --spread or -w : spreads the tests (add a delay before the tests)
+        --private : makes the measurement private
         --machinereadable or -b : machine-readable output, to be consumed by tools like grep or cut
         """ % (self.requested, int(self.percentage_required*100), self.port, self.size), file=sys.stderr)
 
@@ -134,7 +136,7 @@ class Config:
                                            ["requested=", "country=", "area=", "asn=", "prefix=", "probes=",
                                             "port=", "percentage=", "include=", "exclude=", "version",
                                             "measurement-ID=", "old_measurement=", "displayprobes", "size=",
-                                            "ipv4", "machinereadable", "spread=", "verbose", "help"] +
+                                            "ipv4", "private", "machinereadable", "spread=", "verbose", "help"] +
                                            longOptsSpecific)
             for option, value in optlist:
                 if option == "--country" or option == "-c":
@@ -162,6 +164,8 @@ class Config:
                     self.verbose = True
                 elif option == "--ipv4" or option == "-4":
                     self.ipv4 = True
+                elif option == "--private":
+                    self.private = True
                 elif option == "--size" or option == "-z":
                     self.size = int(value)
                 elif option == "--spread" or option == "-w":
@@ -272,6 +276,8 @@ class Config:
             data["definitions"][0]['af'] = 4
         else:
             data["definitions"][0]['af'] = 6 
+        if self.private:
+            data["definitions"][0]['is_public'] = False
         if self.size is not None:
             data["definitions"][0]['size'] = self.size    
         if self.spread is not None:
@@ -294,9 +300,12 @@ class Config:
 class JsonRequest(urllib.request.Request):
     def __init__(self, url):
         urllib.request.Request.__init__(self, url)
+        self.url = url
         self.add_header("Content-Type", "application/json")
         self.add_header("Accept", "application/json")
         self.add_header("User-Agent", "RIPEAtlas.py")
+    def __str__(self):
+        return self.url
 
 class Measurement():
     """ An Atlas measurement, identified by its ID (such as #1010569) in the field "id" """
@@ -328,10 +337,10 @@ class Measurement():
             auth.close()
 
         self.url = base_url + "/?key=%s" % key
-        self.url_probes = base_url + "/%s/?fields=probes,status"
-        self.url_status = base_url + "/%s/?fields=status" 
-        self.url_results = base_url + "/%s/results/"
-        self.url_all = base_url + "/%s/" 
+        self.url_probes = base_url + "/%s/?fields=probes,status" + "&key=%s" % key
+        self.url_status = base_url + "/%s/?fields=status" + "&key=%s" % key 
+        self.url_results = base_url + "/%s/results/" + "?key=%s" % key
+        self.url_all = base_url + "/%s/" + "?key=%s" % key
         self.url_latest = base_url + "-latest/%s/?versions=%s"
 
         self.status = None
