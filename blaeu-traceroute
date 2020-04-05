@@ -206,8 +206,14 @@ if config.format: # Code stolen from json2traceroute.py
             probefrom = probe["from"]
             if probefrom:
                     ASN = whoisrecord(probefrom)
+                    if not isinstance(ASN, Exception):
+                        asn = ASN.asn
+                        owner = ASN.owner
+                    else:
+                        asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
+                        owner = "Unknown"
             try:
-                print("From: ",probefrom,"  ",ASN.asn,"  ",ASN.owner)
+                print("From: ",probefrom,"  ",asn,"  ",owner)
             except Exception as e:
                 print("From: ", probefrom," ","AS lookup error: ",e)
             print("Source address: ",probe["src_addr"])
@@ -236,15 +242,23 @@ if config.format: # Code stolen from json2traceroute.py
                                 ASN = whoisrecord(hopfrom)
                         if hopfrom:
                                   try:
+                                      if not isinstance(ASN, Exception):
+                                          asn = ASN.asn
+                                          owner = ASN.owner
+                                      else:
+                                          asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
+                                          owner = "Unknown"
                                       if not config.do_reverse_lookup:
-                                              print(hopfrom, "  ", ASN.asn, "  ", ASN.owner,"  ",
+                                              print(hopfrom, "  ", asn, "  ", owner,"  ",
                                                             end=' ')
                                       else:
                                               reverse_lookup = lookup_ip(hopfrom)
-                                              print(hopfrom, "  ", reverse_lookup, "  ", ASN.asn, "  ",
-                                                            ASN.owner, "  ", end=' ')
+                                              print(hopfrom, "  ", reverse_lookup, "  ", asn, "  ",
+                                                            owner, "  ", end=' ')
                                   except Exception as e:
-                                      print("Lookup failed because of", e, "  ", end=' ')
+                                      exc_type, exc_value, exc_traceback = sys.exc_info()
+                                      print(hopfrom, " Lookup failed because of", exc_type.__name__, "(",
+                                            exc_value, ") ", end=' ')
                         print(rtt)
                     else:
                         print("Error: ", proberesult["error"])
