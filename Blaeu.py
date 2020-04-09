@@ -12,7 +12,7 @@ Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 
 """
 
-VERSION = '1.1.5-BETA'
+VERSION = '1.1.5'
 
 import os
 import json
