@@ -15,3 +15,5 @@ git tag release-${VERSION}
 python3 setup.py sdist
 gpg --detach-sign -a dist/${PACKAGE}-${VERSION}.tar.gz
 twine upload dist/${PACKAGE}-${VERSION}.tar.gz dist/${PACKAGE}-${VERSION}.tar.gz.asc
+# Tags are not pushed by 'git push' :-(
+git push origin release-${VERSION}
