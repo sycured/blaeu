@@ -28,6 +28,7 @@ config = Blaeu.Config()
 # Default values
 config.protocol = "UDP"
 config.format = False
+config.whois = True # But some networks block outgoing port 43
 config.do_lookup = False
 config.do_reverse_lookup = False
 config.first_hop = 1
@@ -76,6 +77,7 @@ def usage(msg=None):
     config.usage(msg)
     print("""Also:
     --format or -k : downloads the results and format them in a traditional traceroute way
+    --simpleformat : the same, but without looking up the AS (useful if you have no whois access)
     --protocol=PROTO or -j PROTO : uses this protocol (UDP, TCP or ICMP, default is %s)
     --do_lookup or -d : Enables IP lookup feature (default is disabled, may become interactive if the machine has several addresses)
     --do_reverse_lookup or -l : Enables reverse IP lookup feature for hops
@@ -102,6 +104,9 @@ def specificParse(config, option, value):
         config.max_hops = int(value)
     elif option == "--format" or option == "-k":
         config.format = True
+    elif option == "--simpleformat":
+        config.format = True
+        config.whois = False
     elif option == "--do_lookup" or option == "-d":
         config.do_lookup = True
     elif option == "--do_reverse_lookup" or option == "-l":
@@ -110,7 +115,7 @@ def specificParse(config, option, value):
         result = False
     return result
   
-args, data = config.parse("j:x:kdy:l", ["format", "protocol=", "first_hop=", "max_hops=",
+args, data = config.parse("j:x:kdy:l", ["format", "simpleformat", "protocol=", "first_hop=", "max_hops=",
                                "do_lookup","do_reverse_lookup"], specificParse, usage)
 
 if len(args) != 1:
@@ -176,7 +181,8 @@ else:
             
 print(("Test #%s done at %s" % (measurement.id, time.strftime("%Y-%m-%dT%H:%M:%SZ", measurement.time))))
 if config.format: # Code stolen from json2traceroute.py
-    from cymruwhois import Client
+    if config.whois:
+        from cymruwhois import Client
 
     def whoisrecord(ip):
       try:
@@ -193,25 +199,30 @@ if config.format: # Code stolen from json2traceroute.py
         return ASN
       except Exception as e:
         return e
-    
-    try:
-        pkl_file = open('whois.pkl', 'rb')
-        whois = pickle.load(pkl_file)
-    except IOError:
-        whois = {}
+
+    if config.whois:
+        try:
+            pkl_file = open('whois.pkl', 'rb')
+            whois = pickle.load(pkl_file)
+        except IOError:
+            whois = {}
 
     # Create traceroute output
     try:
         for probe in rdata:
             probefrom = probe["from"]
             if probefrom:
-                    ASN = whoisrecord(probefrom)
-                    if not isinstance(ASN, Exception):
-                        asn = ASN.asn
-                        owner = ASN.owner
+                    if config.whois:
+                        ASN = whoisrecord(probefrom)
+                        if not isinstance(ASN, Exception):
+                            asn = ASN.asn
+                            owner = ASN.owner
+                        else:
+                            asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
+                            owner = "Unknown"
                     else:
-                        asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
-                        owner = "Unknown"
+                        asn = ""
+                        owner = ""
             try:
                 print("From: ",probefrom,"  ",asn,"  ",owner)
             except Exception as e:
@@ -239,15 +250,20 @@ if config.format: # Code stolen from json2traceroute.py
                                 except KeyError:
                                     rtt.append("*")
                                 hopfrom = hr["from"]
-                                ASN = whoisrecord(hopfrom)
+                                if config.whois:
+                                    ASN = whoisrecord(hopfrom)
                         if hopfrom:
                                   try:
-                                      if not isinstance(ASN, Exception):
-                                          asn = ASN.asn
-                                          owner = ASN.owner
+                                      if config.whois:
+                                          if not isinstance(ASN, Exception):
+                                              asn = ASN.asn
+                                              owner = ASN.owner
+                                          else:
+                                              asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
+                                              owner = "Unknown"
                                       else:
-                                          asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
-                                          owner = "Unknown"
+                                          asn = ""
+                                          owner = ""
                                       if not config.do_reverse_lookup:
                                               print(hopfrom, "  ", asn, "  ", owner,"  ",
                                                             end=' ')
@@ -264,5 +280,6 @@ if config.format: # Code stolen from json2traceroute.py
                         print("Error: ", proberesult["error"])
             print("")      
     finally:
-          pkl_file = open('whois.pkl', 'wb')
-          pickle.dump(whois, pkl_file)
+          if config.whois:
+              pkl_file = open('whois.pkl', 'wb')
+              pickle.dump(whois, pkl_file)
