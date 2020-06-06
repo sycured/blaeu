@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION=$(./blaeu-reach --version | cut -d' ' -f3)
+VERSION=$(python3 setup.py --version)
 if [ -z "$VERSION" ]; then
    echo "No version found" >&2
    exit 1
