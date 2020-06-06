@@ -323,7 +323,10 @@ for nameserver in config.nameservers:
                     else:
                         if msg.rcode() == dns.rcode.REFUSED: # Not SERVFAIL since
                             # it can be legitimate (DNSSEC problem, for instance)
-                            if config.only_one_per_probe:
+                            if config.only_one_per_probe and len(result_set) > 1: # It
+                                # does not handle the case where there
+                                # are several resolvers and all say
+                                # REFUSED (probably a rare case).
                                 if first_error == "":
                                     first_error = "ERROR: %s" % dns.rcode.to_text(msg.rcode())
                                 continue # Try again
