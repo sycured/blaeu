@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-""" Python code to start a RIPE Atlas UDM (User-Defined
-Measurement). This one is for running IPv4 or IPv6 ICMP queries to
-test reachability.
+"""Python code to start a RIPE Atlas UDM (User-Defined Measurement).
+
+This one is for running IPv4 or IPv6 ICMP queries to test reachability.
 
 You'll need an API key in ~/.atlas/auth.
 
@@ -13,117 +13,124 @@ them.
 Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 """
 
-import json
-import time
-import os
-import sys
-import time
-import socket
-import copy
-import collections
+from collections import defaultdict
+from copy import copy
+from socket import AF_INET, AF_INET6, error, inet_pton
+from sys import argv, exit, stderr
+from time import gmtime, strftime
 
-import Blaeu
+from Blaeu import Config, Measurement
 
-config = Blaeu.Config()
+config = Config()
 # Default values
-config.tests = 3 # ICMP packets per probe
-config.by_probe = False # Default is to count by test, not by probe
+config.tests = 3  # ICMP packets per probe
+config.by_probe = False  # Default is to count by test, not by probe
 config.display_probes = False
+
 
 class Set():
     def __init__(self):
         self.failed = True
-        
+
+
 def is_ip_address(str):
     try:
-        addr = socket.inet_pton(socket.AF_INET6, str)
-    except socket.error: # not a valid IPv6 address
+        addr = inet_pton(AF_INET6, str)
+    except error:  # not a valid IPv6 address
         try:
-            addr = socket.inet_pton(socket.AF_INET, str)
-        except socket.error: # not a valid IPv4 address either
+            addr = inet_pton(AF_INET, str)
+        except error:  # not a valid IPv4 address either
             return False
     return True
 
-def usage(msg=None):
-    print("Usage: %s target-IP-address ..." % sys.argv[0], file=sys.stderr)
-    config.usage(msg)
-    print("""Also:
-    --tests=N or -d N : send N ICMP packets from each probe (default is %s)
-    --by_probe : count the percentage of success by probe, not by test (useless if --tests=1)
-    """ % (config.tests), file=sys.stderr)
 
-def specificParse(config, option, value):
+def usage(msg=None):
+    print('Usage: %s target-IP-address ...' % argv[0], file=stderr)
+    config.usage(msg)
+    print(f"""Also:
+    --tests=N or -d N : send N ICMP packets from each probe (default is {config.tests})
+    --by_probe : count the percentage of success by probe, not by test (useless if --tests=1)
+    """, file=stderr)
+
+
+def specific_parse(config, option, value):
     result = True
-    if option == "--tests" or option == "-d":
+    if option in ['--tests', '-d']:
         config.tests = int(value)
-    elif option == "--by_probe":
+    elif option == '--by_probe':
         config.by_probe = True
     else:
         result = False
     return result
-    
-args, data = config.parse("d:", ["by_probe", "tests="], specificParse,
-                    usage)
+
+
+args, data = config.parse('d:', ['by_probe', 'tests='], specific_parse, usage)
 
 targets = args
 if len(targets) == 0:
-    usage("No target found")
-    sys.exit(1)
-    
+    usage('No target found')
+    exit(1)
+
 if config.verbose and config.machine_readable:
-    usage("Specify verbose *or* machine-readable output")
-    sys.exit(1)
+    usage('Specify verbose *or* machine-readable output')
+    exit(1)
 if config.display_probes and config.machine_readable:
-    usage("Display probes *or* machine-readable output")
-    sys.exit(1)
-data["definitions"][0]["type"] = "ping"
-del data["definitions"][0]["port"] 
-data["definitions"][0]["packets"] = config.tests
+    usage('Display probes *or* machine-readable output')
+    exit(1)
+data['definitions'][0]['type'] = 'ping'
+del data["definitions"][0]["port"]
+data['definitions'][0]['packets'] = config.tests
 
 for target in targets:
     if not is_ip_address(target):
-        print(("Target must be an IP address, NOT AN HOST NAME"), file=sys.stderr)
-        sys.exit(1)
-    data["definitions"][0]["target"] = target
-    data["definitions"][0]["description"] = ("Ping %s" % target) + data["definitions"][0]["description"]
+        print('Target must be an IP address, NOT AN HOST NAME', file=stderr)
+        exit(1)
+    data['definitions'][0]['target'] = target
+    data['definitions'][0]['description'] = f"Ping {target} {data['definitions'][0]['description']}"
     if target.find(':') > -1:
         config.ipv4 = False
-        data["definitions"][0]['af'] = 6
+        data['definitions'][0]['af'] = 6
     else:
         config.ipv4 = True
-        data["definitions"][0]['af'] = 4
+        data['definitions'][0]['af'] = 4
     # Yes, it was aready done in parse() but we have to do it again now that we
     # know the address family of the target. See bug #9. Note that we silently
     # override a possible explicit choice of the user (her -4 may be ignored).
     if config.include is not None:
-        data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+        data['probes'][0]['tags']['include'] = copy(config.include)
     else:
-        data["probes"][0]["tags"]["include"] = []
+        data['probes'][0]['tags']['include'] = []
     if config.ipv4:
-        data["probes"][0]["tags"]["include"].append("system-ipv4-works") # Some probes cannot do ICMP outgoing (firewall?)
+        data['probes'][0]['tags']['include'].append(
+            'system-ipv4-works')  # Some probes cannot do ICMP outgoing (firewall?)
     else:
-        data["probes"][0]["tags"]["include"].append("system-ipv6-works")
+        data['probes'][0]['tags']['include'].append('system-ipv6-works')
     if config.exclude is not None:
-        data["probes"][0]["tags"]["exclude"] = copy.copy(config.exclude)
+        data['probes'][0]['tags']['exclude'] = copy(config.exclude)
     if config.measurement_id is None:
         if config.verbose:
             print(data)
-        measurement = Blaeu.Measurement(data)
+        measurement = Measurement(data)
         if config.old_measurement is None:
             config.old_measurement = measurement.id
         if config.verbose:
-            print("Measurement #%s to %s uses %i probes" % (measurement.id, target,
-                                                        measurement.num_probes))
+            print('Measurement #%s to %s uses %i probes' % (
+            measurement.id, target,
+            measurement.num_probes))
         # Retrieve the results
-        rdata = measurement.results(wait=True, percentage_required=config.percentage_required)
+        rdata = measurement.results(wait=True,
+                                    percentage_required=config.percentage_required)
     else:
-        measurement = Blaeu.Measurement(data=None, id=config.measurement_id)
+        measurement = Measurement(data=None, id=config.measurement_id)
         rdata = measurement.results(wait=False)
         if config.verbose:
-            print("%i results from already-done measurement #%s" % (len(rdata), measurement.id))
+            print(f'{len(rdata):d} results from already-done '
+                  f'measurement #{measurement.id}')
 
     if len(rdata) == 0:
-        print("Warning: zero results. Measurement not terminated? May be retry later with --measurement-ID=%s ?" % measurement.id, file=sys.stderr)
+        print(
+            f'Warning: zero results. Measurement not terminated? May be retry '
+            f'later with --measurement-ID={measurement.id} ?', file=stderr)
     total_rtt = 0
     num_rtt = 0
     num_error = 0
@@ -134,27 +141,27 @@ for target in targets:
         probes_failure = 0
         num_probes = 0
     if not config.machine_readable and config.measurement_id is None:
-        print(("%s probes reported" % len(rdata)))
+        print(f'{len(rdata)} probes reported')
     if config.display_probes:
-        failed_probes = collections.defaultdict(Set)
+        failed_probes = defaultdict(Set)
     for result in rdata:
         probe_ok = False
-        probe = result["prb_id"]
+        probe = result['prb_id']
         if config.by_probe:
             num_probes += 1
-        for test in result["result"]:
+        for test in result['result']:
             num_tests += 1
-            if "rtt" in test:
-                total_rtt += int(test["rtt"])
+            if 'rtt' in test:
+                total_rtt += int(test['rtt'])
                 num_rtt += 1
                 probe_ok = True
-            elif "error" in test:
+            elif 'error' in test:
                 num_error += 1
-            elif "x" in test:
+            elif 'x' in test:
                 num_timeout += 1
             else:
-                print(("Result has no field rtt, or x or error"), file=sys.stderr)
-                sys.exit(1)
+                print('Result has no field rtt, or x or error', file=stderr)
+                exit(1)
         if config.by_probe:
             if probe_ok:
                 probes_success += 1
@@ -163,22 +170,28 @@ for target in targets:
         if config.display_probes and not probe_ok:
             failed_probes[probe].failed = True
     if not config.machine_readable:
-        print(("Test #%s done at %s" % (measurement.id, time.strftime("%Y-%m-%dT%H:%M:%SZ", measurement.time))))
+        print(
+            f"Test #{measurement.id} done at {strftime('%Y-%m-%dT%H:%M:%SZ', measurement.time)}")
     if num_rtt == 0:
         if not config.machine_readable:
             print("No successful test")
     else:
         if not config.machine_readable:
             if not config.by_probe:
-                print(("Tests: %i successful tests (%.1f %%), %i errors (%.1f %%), %i timeouts (%.1f %%), average RTT: %i ms" % \
-                    (num_rtt, num_rtt*100.0/num_tests, 
-                    num_error, num_error*100.0/num_tests, 
-                    num_timeout, num_timeout*100.0/num_tests, total_rtt/num_rtt)))
+                print((
+                                  "Tests: %i successful tests (%.1f %%), %i errors (%.1f %%), %i timeouts (%.1f %%), average RTT: %i ms" % \
+                                  (num_rtt, num_rtt * 100.0 / num_tests,
+                                   num_error, num_error * 100.0 / num_tests,
+                                   num_timeout, num_timeout * 100.0 / num_tests,
+                                   total_rtt / num_rtt)))
             else:
-                print(("Tests: %i successful probes (%.1f %%), %i failed (%.1f %%), average RTT: %i ms" % \
-                    (probes_success, probes_success*100.0/num_probes, 
-                    probes_failure, probes_failure*100.0/num_probes, 
-                    total_rtt/num_rtt)))
+                print((
+                                  "Tests: %i successful probes (%.1f %%), %i failed (%.1f %%), average RTT: %i ms" % \
+                                  (probes_success,
+                                   probes_success * 100.0 / num_probes,
+                                   probes_failure,
+                                   probes_failure * 100.0 / num_probes,
+                                   total_rtt / num_rtt)))
     if len(targets) > 1 and not config.machine_readable:
         print("")
     if config.display_probes:
@@ -187,10 +200,16 @@ for target in targets:
             print(all)
     if config.machine_readable:
         if num_rtt != 0:
-            percent_rtt = total_rtt/num_rtt
+            percent_rtt = total_rtt / num_rtt
         else:
             percent_rtt = 0
-        print(",".join([target, str(measurement.id), "%s/%s" % (len(rdata),measurement.num_probes), \
-                        time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "%i" % num_rtt, \
-                        "%.1f" % (num_rtt*100.0/num_tests), "%i" % num_error, "%.1f" % (num_error*100.0/num_tests), \
-                        "%i" % num_timeout, "%.1f" % (num_timeout*100.0/num_tests), "%i" % (percent_rtt)]))
+        print(",".join([target, str(measurement.id),
+                        "%s/%s" % (len(rdata), measurement.num_probes), \
+                        strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()),
+                        "%i" % num_rtt, \
+                        "%.1f" % (num_rtt * 100.0 / num_tests),
+                        "%i" % num_error,
+                        "%.1f" % (num_error * 100.0 / num_tests), \
+                        "%i" % num_timeout,
+                        "%.1f" % (num_timeout * 100.0 / num_tests),
+                        "%i" % (percent_rtt)]))

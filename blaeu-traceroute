@@ -9,71 +9,72 @@ You'll need an API key in ~/.atlas/auth.
 
 Stéphane Bortzmeyer <stephane+frama@bortzmeyer.org>
 """
+from copy import copy
+from pickle import load, dump
+from socket import SOCK_STREAM, inet_pton, getaddrinfo, gethostbyaddr, AF_INET,\
+    error, AF_INET6, AF_UNSPEC, AI_PASSIVE
+from sys import exit, exc_info, stderr, argv
+from time import strftime, time
 
-import json
-import time
-import os
-import string
-import sys
-import time
-import socket
-import pickle as pickle
-
-import Blaeu
+from Blaeu import Measurement, Config
 
 # If we use --format:
 # import cymruwhois
 
-config = Blaeu.Config()
+config = Config()
 # Default values
 config.protocol = "UDP"
 config.format = False
-config.whois = True # But some networks block outgoing port 43
+config.whois = True  # But some networks block outgoing port 43
 config.do_lookup = False
 config.do_reverse_lookup = False
 config.first_hop = 1
 config.max_hops = 32
 
+
 def is_ip_address(str):
     try:
-        addr = socket.inet_pton(socket.AF_INET6, str)
-    except socket.error: # not a valid IPv6 address
+        addr = inet_pton(AF_INET6, str)
+    except error:  # not a valid IPv6 address
         try:
-            addr = socket.inet_pton(socket.AF_INET, str)
-        except socket.error: # not a valid IPv4 address either
+            addr = inet_pton(AF_INET, str)
+        except error:  # not a valid IPv4 address either
             return False
     return True
 
+
 def lookup_hostname(str):
     try:
-        info = socket.getaddrinfo(str, 0, socket.AF_UNSPEC, socket.SOCK_STREAM,0, socket.AI_PASSIVE)
+        info = getaddrinfo(str, 0, AF_UNSPEC, SOCK_STREAM,
+                           0, AI_PASSIVE)
         if len(info) > 1:
             print("%s returns more then one IP address please select one" % str)
-            count=0
+            count = 0
             for ip in info:
-                count= count + 1    
+                count += 1
                 fa, socktype, proto, canonname, sa = ip
                 print("%s - %s" % (count, sa[0]))
-            selection=int(input("=>"))
-            selection = selection - 1
-            selected_ip=info[selection][4][0]
+            selection = int(input("=>"))
+            selection -= 1
+            selected_ip = info[selection][4][0]
         else:
-            selected_ip=info[0][4][0]
+            selected_ip = info[0][4][0]
             print("Using IP: %s" % selected_ip)
-    except socket.error:
+    except error:
         return False
     return selected_ip
 
+
 def lookup_ip(ip):
     try:
-        name, alias, addresslist = socket.gethostbyaddr(ip)
+        name, alias, addresslist = gethostbyaddr(ip)
     except Exception as e:
-        msg = "No PTR"
-        return msg
+        return "No PTR"
     return name
 
+
 def usage(msg=None):
-    print("Usage: %s target-IP-address-or-name" % sys.argv[0], file=sys.stderr)
+    print("Usage: %s target-IP-address-or-name" % argv[0], file=stderr)
     config.usage(msg)
     print("""Also:
     --format or -k : downloads the results and format them in a traditional traceroute way
@@ -83,7 +84,7 @@ def usage(msg=None):
     --do_reverse_lookup or -l : Enables reverse IP lookup feature for hops
     --first_hop=N or -y N : TTL/max hop count for the first hop  (default %d)
     --max_hops=N or -x N : TTL/max hop count for the last hop  (default %d)
-    """ % (config.protocol, config.first_hop, config.max_hops), file=sys.stderr)
+    """ % (config.protocol, config.first_hop, config.max_hops), file=stderr)
 
     """For "TCP Ping"
     <https://labs.ripe.net/Members/wilhelm/measuring-your-web-server-reachability-with-tcp-ping>,
@@ -91,50 +92,59 @@ def usage(msg=None):
 
     """
 
+
 def specificParse(config, option, value):
     result = True
-    if option == "--protocol" or option == "-j":
+    if option in ["--protocol", "-j"]:
         if value.upper() != "UDP" and value.upper() != "ICMP" and value.upper() != "TCP":
-            usage("Protocol must be UDP or ICMP or TCP: %s rejected" % value.upper())
-            sys.exit(1)
+            usage(
+                "Protocol must be UDP or ICMP or TCP: %s rejected" % value.upper())
+            exit(1)
         config.protocol = value.upper()
-    elif option == "--first_hop" or option == "-y":
+    elif option in ["--first_hop", "-y"]:
         config.first_hop = int(value)
-    elif option == "--max_hops" or option == "-x":
+    elif option in ["--max_hops", "-x"]:
         config.max_hops = int(value)
-    elif option == "--format" or option == "-k":
+    elif option in ["--format", "-k"]:
         config.format = True
     elif option == "--simpleformat":
         config.format = True
         config.whois = False
-    elif option == "--do_lookup" or option == "-d":
+    elif option in ["--do_lookup", "-d"]:
         config.do_lookup = True
-    elif option == "--do_reverse_lookup" or option == "-l":
+    elif option in ["--do_reverse_lookup", "-l"]:
         config.do_reverse_lookup = True
     else:
         result = False
     return result
-  
-args, data = config.parse("j:x:kdy:l", ["format", "simpleformat", "protocol=", "first_hop=", "max_hops=",
-                               "do_lookup","do_reverse_lookup"], specificParse, usage)
+
+
+args, data = config.parse("j:x:kdy:l",
+                          ["format", "simpleformat", "protocol=", "first_hop=",
+                           "max_hops=",
+                           "do_lookup", "do_reverse_lookup"], specificParse,
+                          usage)
 
 if len(args) != 1:
     usage()
-    sys.exit(1)
+    exit(1)
 target = args[0]
 
 if config.do_lookup:
     hostname = target
     target = lookup_hostname(hostname)
     if not target:
-        print(("Unknown host name \"%s\"" % hostname), file=sys.stderr)
-        sys.exit(1)
-else:        
+        print(("Unknown host name \"%s\"" % hostname), file=stderr)
+        exit(1)
+else:
     if not is_ip_address(target):
-        print("Target must be an IP address, NOT AN HOST NAME (or use --do_lookup)", file=sys.stderr)
-        sys.exit(1)
+        print(
+            "Target must be an IP address, NOT AN HOST NAME (or use --do_lookup)",
+            file=stderr)
+        exit(1)
 
-data["definitions"][0]["description"] = ("Traceroute %s" % target) + data["definitions"][0]["description"]
+data["definitions"][0]["description"] = ("Traceroute %s" % target) + \
+                                        data["definitions"][0]["description"]
 data["definitions"][0]["type"] = "traceroute"
 data["definitions"][0]["protocol"] = config.protocol
 data["definitions"][0]["target"] = target
@@ -142,68 +152,74 @@ data["definitions"][0]["target"] = target
 if config.first_hop is not None:
     data["definitions"][0]['first_hop'] = config.first_hop
 if config.max_hops is not None:
-    data["definitions"][0]['max_hops'] = config.max_hops    
-    
-if target.find(':') > -1: # TODO: or use is_ip_address(str) from blaeu-reach?
+    data["definitions"][0]['max_hops'] = config.max_hops
+
+if target.find(':') > -1:  # TODO: or use is_ip_address(str) from blaeu-reach?
     config.ipv4 = False
     af = 6
     if config.include is not None:
-        data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+        data["probes"][0]["tags"]["include"] = copy(config.include)
         data["probes"][0]["tags"]["include"].append("system-ipv6-works")
     else:
-        data["probes"][0]["tags"]["include"] = ["system-ipv6-works",]
+        data["probes"][0]["tags"]["include"] = ["system-ipv6-works", ]
 else:
     config.ipv4 = True
     af = 4
     if config.include is not None:
-        data["probes"][0]["tags"]["include"] = copy.copy(config.include)
+        data["probes"][0]["tags"]["include"] = copy(config.include)
         data["probes"][0]["tags"]["include"].append("system-ipv4-works")
     else:
-        data["probes"][0]["tags"]["include"] = ["system-ipv4-works",]
+        data["probes"][0]["tags"]["include"] = ["system-ipv4-works", ]
 data["definitions"][0]['af'] = af
 
 if config.measurement_id is None:
     if config.verbose:
         print(data)
 
-    measurement = Blaeu.Measurement(data)
+    measurement = Measurement(data)
     print("Measurement #%s %s uses %i probes" % (measurement.id,
-                                                 data["definitions"][0]["description"],
+                                                 data["definitions"][0][
+                                                     "description"],
                                                  measurement.num_probes))
 
-    rdata = measurement.results(wait=True, percentage_required=config.percentage_required)
+    rdata = measurement.results(wait=True,
+                                percentage_required=config.percentage_required)
     print(("%s probes reported" % len(rdata)))
 else:
-    measurement = Blaeu.Measurement(data=None, id=config.measurement_id)
+    measurement = Measurement(data=None, id=config.measurement_id)
     rdata = measurement.results(wait=False)
     if config.verbose:
-            print("%i results from already-done measurement #%s" % (len(rdata), measurement.id))
-            
-print(("Test #%s done at %s" % (measurement.id, time.strftime("%Y-%m-%dT%H:%M:%SZ", measurement.time))))
-if config.format: # Code stolen from json2traceroute.py
+        print("%i results from already-done measurement #%s" % (
+            len(rdata), measurement.id))
+
+print(("Test #%s done at %s" % (
+    measurement.id, strftime("%Y-%m-%dT%H:%M:%SZ", measurement.time))))
+if config.format:  # Code stolen from json2traceroute.py
     if config.whois:
         from cymruwhois import Client
 
+
     def whoisrecord(ip):
-      try:
-        currenttime = time.time()
-        ts = currenttime
-        if ip in whois:
-            ASN,ts = whois[ip]
-        else:
-            ts = 0
-        if ((currenttime - ts) > 36000):
-            c = Client()
-            ASN = c.lookup(ip)
-            whois[ip] = (ASN,currenttime)
-        return ASN
-      except Exception as e:
-        return e
+        try:
+            currenttime = time()
+            ts = currenttime
+            if ip in whois:
+                ASN, ts = whois[ip]
+            else:
+                ts = 0
+            if ((currenttime - ts) > 36000):
+                c = Client()
+                ASN = c.lookup(ip)
+                whois[ip] = (ASN, currenttime)
+            return ASN
+        except Exception as e:
+            return e
+
 
     if config.whois:
         try:
             pkl_file = open('whois.pkl', 'rb')
-            whois = pickle.load(pkl_file)
+            whois = load(pkl_file)
         except IOError:
             whois = {}
 
@@ -212,74 +228,77 @@ if config.format: # Code stolen from json2traceroute.py
         for probe in rdata:
             probefrom = probe["from"]
             if probefrom:
-                    if config.whois:
-                        ASN = whoisrecord(probefrom)
-                        if not isinstance(ASN, Exception):
-                            asn = ASN.asn
-                            owner = ASN.owner
-                        else:
-                            asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
-                            owner = "Unknown"
+                if config.whois:
+                    ASN = whoisrecord(probefrom)
+                    if not isinstance(ASN, Exception):
+                        asn = ASN.asn
+                        owner = ASN.owner
                     else:
-                        asn = ""
-                        owner = ""
+                        asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
+                        owner = "Unknown"
+                else:
+                    asn = ""
+                    owner = ""
             try:
-                print("From: ",probefrom,"  ",asn,"  ",owner)
+                print("From: ", probefrom, "  ", asn, "  ", owner)
             except Exception as e:
-                print("From: ", probefrom," ","AS lookup error: ",e)
-            print("Source address: ",probe["src_addr"])
-            print("Probe ID: ",probe["prb_id"])
+                print("From: ", probefrom, " ", "AS lookup error: ", e)
+            print("Source address: ", probe["src_addr"])
+            print("Probe ID: ", probe["prb_id"])
             result = probe["result"]
             for proberesult in result:
-                    ASN = {}
-                    if "result" in proberesult:
-                        print(proberesult["hop"],"  ", end=' ')
-                        hopresult = proberesult["result"]
-                        rtt = []
-                        hopfrom = ""
-                        for hr in hopresult:
-                            if "error" in hr:
-                                rtt.append(hr["error"])
-                            elif "x" in hr:
-                                rtt.append(str(hr["x"]))
-                            elif "edst" in hr:
-                                rtt.append("!")
+                ASN = {}
+                if "result" in proberesult:
+                    print(proberesult["hop"], "  ", end=' ')
+                    hopresult = proberesult["result"]
+                    rtt = []
+                    hopfrom = ""
+                    for hr in hopresult:
+                        if "error" in hr:
+                            rtt.append(hr["error"])
+                        elif "x" in hr:
+                            rtt.append(str(hr["x"]))
+                        elif "edst" in hr:
+                            rtt.append("!")
+                        else:
+                            try:
+                                rtt.append(hr["rtt"])
+                            except KeyError:
+                                rtt.append("*")
+                            hopfrom = hr["from"]
+                            if config.whois:
+                                ASN = whoisrecord(hopfrom)
+                    if hopfrom:
+                        try:
+                            if config.whois:
+                                if not isinstance(ASN, Exception):
+                                    asn = ASN.asn
+                                    owner = ASN.owner
+                                else:
+                                    asn = "No AS: %s \"%s\"" % (
+                                        type(ASN).__name__, ASN)
+                                    owner = "Unknown"
                             else:
-                                try:
-                                    rtt.append(hr["rtt"])
-                                except KeyError:
-                                    rtt.append("*")
-                                hopfrom = hr["from"]
-                                if config.whois:
-                                    ASN = whoisrecord(hopfrom)
-                        if hopfrom:
-                                  try:
-                                      if config.whois:
-                                          if not isinstance(ASN, Exception):
-                                              asn = ASN.asn
-                                              owner = ASN.owner
-                                          else:
-                                              asn = "No AS: %s \"%s\"" % (type(ASN).__name__, ASN)
-                                              owner = "Unknown"
-                                      else:
-                                          asn = ""
-                                          owner = ""
-                                      if not config.do_reverse_lookup:
-                                              print(hopfrom, "  ", asn, "  ", owner,"  ",
-                                                            end=' ')
-                                      else:
-                                              reverse_lookup = lookup_ip(hopfrom)
-                                              print(hopfrom, "  ", reverse_lookup, "  ", asn, "  ",
-                                                            owner, "  ", end=' ')
-                                  except Exception as e:
-                                      exc_type, exc_value, exc_traceback = sys.exc_info()
-                                      print(hopfrom, " Lookup failed because of", exc_type.__name__, "(",
-                                            exc_value, ") ", end=' ')
-                        print(rtt)
-                    else:
-                        print("Error: ", proberesult["error"])
-            print("")      
+                                asn = ""
+                                owner = ""
+                            if not config.do_reverse_lookup:
+                                print(hopfrom, "  ", asn, "  ", owner, "  ",
+                                      end=' ')
+                            else:
+                                reverse_lookup = lookup_ip(hopfrom)
+                                print(hopfrom, "  ", reverse_lookup, "  ", asn,
+                                      "  ",
+                                      owner, "  ", end=' ')
+                        except Exception as e:
+                            exc_type, exc_value, exc_traceback = exc_info()
+                            print(hopfrom, " Lookup failed because of",
+                                  exc_type.__name__, "(",
+                                  exc_value, ") ", end=' ')
+                    print(rtt)
+                else:
+                    print("Error: ", proberesult["error"])
+            print("")
     finally:
-          if config.whois:
-              pkl_file = open('whois.pkl', 'wb')
-              pickle.dump(whois, pkl_file)
+        if config.whois:
+            pkl_file = open('whois.pkl', 'wb')
+            dump(whois, pkl_file)
