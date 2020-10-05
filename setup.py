@@ -14,17 +14,19 @@ from os import path
 import Blaeu
 
 here = path.abspath(path.dirname(__file__))
+readme_rst = 'README.rst'
 
 # Get the long description from the README file
-if not path.exists('README.rst'): # TODO: and test it is newer than README.md
+if not path.exists(readme_rst):  # TODO: and test it is newer than README.md
     import pypandoc
+
     rst = pypandoc.convert('README.md', 'rst')
-    f = open('README.rst','w+')
+    f = open(readme_rst, 'w+')
     f.write(rst)
     f.close()
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, readme_rst), encoding='utf-8') as f:
     long_description = f.read()
-    
+
 # Arguments marked as "Required" below must be included for upload to PyPI.
 # Fields marked as "Optional" may be commented out.
 setup(
@@ -37,7 +39,8 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='Tools to create (and analyze) RIPE Atlas network measurements',  # Required
+    description='Tools to create (and analyze) RIPE Atlas network measurements',
+    # Required
 
     # This field corresponds to the "Description" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#description-optional
@@ -57,8 +60,8 @@ setup(
     # above.
     author_email='stephane+frama@bortzmeyer.org',  # Optional
 
-    license = 'BSD',
-    
+    license='BSD',
+
     # Classifiers help users find your project by categorizing it.
     #
     # For a list of valid classifiers, see
@@ -75,7 +78,6 @@ setup(
         'Intended Audience :: Telecommunications Industry',
 
         'Topic :: System :: Networking',
-
 
         # Pick your license as you wish
         'License :: OSI Approved :: MIT License',
