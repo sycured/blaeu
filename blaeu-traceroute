@@ -202,7 +202,6 @@ if config.format:  # Code stolen from json2traceroute.py
     def whoisrecord(ip):
         try:
             currenttime = time()
-            ts = currenttime
             if ip in whois:
                 ASN, ts = whois[ip]
             else:
